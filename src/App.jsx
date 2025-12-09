@@ -23,8 +23,8 @@ import Cursos from "./pages/Detallescurso/CursosList.jsx";
 
 // ✅ DOCENTE
 import Docente from "./pages/Docentes/DashboarDocente.jsx";
-import Seccion1 from "./pages/Docentes/Secciones.jsx";
 import Notas from "./pages/Docentes/PublicarNotas.jsx";
+import PerfilDocente from "./pages/Docentes/PerfilDocente.jsx";
 
 // ✅ COMPONENTE DE PROTECCIÓN
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
@@ -66,12 +66,12 @@ function App() {
             <Route path="/Pagos" element={<Pay />} />
             <Route path="/EstudianteEST" element={<EstudianteEST />} />
             <Route path="/cursosList" element={<Cursos />} />
-            <Route path="/DashboardDocente" element={<Docente />} />
-            <Route path="/Seccion" element={<Seccion1 />} />
-            <Route path="/PublicarNotas" element={<Notas />} />
 
-            {/* Fallback */}
-            <Route path="*" element={<Navigate to="/" replace />} />
+            {/* DOCENTE */}
+
+            <Route path="/PerfilDocente" element={<PerfilDocente />} />
+            <Route path="/docente/:id" element={<Docente />} />
+            <Route path="/notas/:id" element={<Notas />} />
 
             {/* 🚫 RUTA POR DEFECTO */}
             <Route path="*" element={<Navigate to="/" replace />} />
