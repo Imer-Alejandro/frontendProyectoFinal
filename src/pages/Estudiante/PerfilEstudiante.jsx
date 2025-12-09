@@ -1,102 +1,177 @@
 /* eslint-disable jsx-a11y/anchor-is-valid */
-import React from "react";
+import React, { useContext, useState } from "react";
+import { AuthContext } from "../../context/AuthContext";
+import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
 export default function PerfilEstudiante() {
-  const handleRegresar = () => {
-    window.history.back();
+  const { user, login } = useContext(AuthContext);
+  const navigate = useNavigate();
+  const [openModal, setOpenModal] = useState(false);
+
+  const [formData, setFormData] = useState({
+    nombre: user?.nombre || "",
+    apellido: user?.apellido || "",
+    telefono: user?.telefono || "",
+    email: user?.email || "",
+  });
+
+  const handleRegresar = () => window.history.back();
+  const handleChange = (e) =>
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+
+  const guardarCambios = async () => {
+    try {
+      await axios.put(
+        `https://servidor-proyecto-final-itla.vercel.app/api/usuarios/${user.usuario_id}`,
+        formData
+      );
+
+      login({ ...user, ...formData });
+      setOpenModal(false);
+      alert("Datos actualizados correctamente");
+    } catch (error) {
+      alert("Error al actualizar los datos");
+      console.error(error);
+    }
   };
 
   return (
-    <div className="p-5 font-sans text-gray-800">
+    <div className="p-6 font-sans text-gray-800">
       {/* Header */}
       <div className="flex items-center mb-6">
         <button
           onClick={handleRegresar}
-          className="bg-transparent border-none text-gray-600 text-sm cursor-pointer mr-3 hover:text-[#2a60c8] transition-colors flex items-center gap-1"
+          className="text-gray-600 text-sm cursor-pointer mr-3 hover:text-blue-600 transition flex items-center gap-1"
         >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-4 w-4"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            strokeWidth={2}
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-          </svg>
-          regresar
+          ← Regresar
         </button>
-        <div className="bg-[#1f3148] h-[70px] flex-1 rounded-md border-2 border-[#4b83d1]"></div>
+        <div className="bg-blue-900 h-[70px] flex-1 rounded-md border-2 border-blue-400"></div>
       </div>
 
       {/* Content */}
       <div className="flex gap-10 mt-5">
         {/* Información del estudiante */}
-        <div className="flex-1">
-          <div className="bg-[#1f3148] text-white w-16 h-16 rounded-lg flex items-center justify-center font-bold text-lg mb-4">
-            NU
+        <div className="flex-1 bg-white p-5 rounded shadow">
+          <div className="bg-blue-900 text-white w-16 h-16 rounded-lg flex items-center justify-center font-bold text-lg mb-4 uppercase">
+            {user?.nombre?.slice(0, 2) || "U"}
           </div>
 
-          <h2 className="text-xl font-semibold mb-3">
-            Nombre del usuario completo con apellido
+          <h2 className="text-xl font-semibold mb-1 capitalize">
+            {user?.nombre} {user?.apellido}
           </h2>
+          <p className="text-sm text-gray-600 mb-2">{user?.rol}</p>
 
-          <p className="text-sm text-gray-600">Matrícula - 2025B123255</p>
-          <p className="text-sm text-gray-600">Fecha ingreso - 12 - 9 - 2025</p>
+          <p className="text-sm mb-1">📧 {user?.email}</p>
+          <p className="text-sm mb-3">📱 {user?.telefono || "No registrado"}</p>
 
-          <p className="text-sm text-gray-600 mt-1">
-            Curso en curso -{" "}
-            <a href="#" className="text-[#2a60c8] underline">
-              Programación orientada a objeto
-            </a>
+          <p className="text-sm text-gray-700 font-medium">
+            Matrícula:{" "}
+            <span className="font-semibold">
+              {user?.matricula || "No asignada"}
+            </span>
           </p>
 
-          <p className="text-sm text-gray-600 mt-1">
-            Deuda pendiente -{" "}
-            <span className="text-red-600 font-bold">$3,500</span>
-          </p>
-
-          <button className="bg-[#2a60c8] text-white border-none py-2 px-6 rounded mt-3 cursor-pointer hover:bg-blue-700 transition">
-            abonar deuda
+          <button
+            onClick={() => setOpenModal(true)}
+            className="bg-blue-600 text-white py-2 px-6 rounded mt-4 hover:bg-blue-700 transition"
+          >
+            Editar perfil
           </button>
         </div>
 
-        {/* Divisor */}
-        <div className="w-px bg-gray-300"></div>
+        {/* Curso Actual */}
+        <div className="flex-1 bg-white p-5 rounded shadow">
+          <h3 className="text-lg font-semibold mb-4">Curso en curso</h3>
 
-        {/* Datos académicos */}
-        <div className="flex-1">
-          <h3 className="text-lg font-semibold mb-4">Informaciones académicas</h3>
-          <p className="text-sm text-gray-700 mb-3">Curso en curso</p>
+          {user?.curso_actual_id ? (
+            <div className="bg-gray-100 p-3 rounded-md flex justify-between items-center">
+              <div>
+                <p className="font-medium text-sm">
+                  Curso #{user.curso_actual_id}
+                </p>
+                <button
+                  onClick={() =>
+                    navigate(`/DetalleCursos/${user.curso_actual_id}`)
+                  }
+                  className="text-blue-600 text-xs underline mt-1"
+                >
+                  Ver detalle del curso
+                </button>
+              </div>
 
-          {/* Curso Card */}
-          <div className="flex items-center justify-between bg-gray-100 p-3 rounded-md w-3/4 mb-5">
-            <div className="bg-[#1f3148] text-white px-3 py-1 rounded text-sm font-medium">
-              NU
+              <div className="bg-green-500 text-white text-xs px-2 py-1 rounded-full">
+                En curso
+              </div>
             </div>
-            <span className="text-sm font-medium">
-              Nombre del curso en cuestión...
-            </span>
-            <div className="bg-[#6bd66b] text-white text-xs px-2 py-1 rounded-full">
-              85%
+          ) : (
+            <div className="bg-yellow-100 text-yellow-800 p-3 rounded text-sm font-medium">
+              📌 No tienes curso asignado actualmente
             </div>
-          </div>
-
-          {/* Avances Card */}
-          <div className="bg-[#1f3148] text-white p-4 rounded-md w-3/4">
-            <h4 className="text-base font-semibold mb-2">Avances académicos</h4>
-            <p className="text-sm">
-              Aprobados <span className="text-[#6bd66b] font-bold">7</span>
-            </p>
-            <p className="text-sm">
-              Reprobados <span className="text-[#e74c3c] font-bold">5</span>
-            </p>
-            <p className="text-sm">
-              En curso <span className="text-gray-400 font-bold">1</span>
-            </p>
-          </div>
+          )}
         </div>
       </div>
+
+      {/* Modal de edición */}
+      {openModal && (
+        <>
+          <div
+            className="fixed inset-0 bg-black bg-opacity-40"
+            onClick={() => setOpenModal(false)}
+          />
+
+          <div className="fixed top-1/2 left-1/2 w-80 -translate-x-1/2 -translate-y-1/2 bg-white rounded-lg p-5 shadow-lg z-50">
+            <h3 className="text-lg font-semibold mb-3">Editar perfil</h3>
+
+            <input
+              name="nombre"
+              placeholder="Nombre"
+              value={formData.nombre}
+              onChange={handleChange}
+              className="border w-full p-2 rounded mb-2 text-sm"
+            />
+
+            <input
+              name="apellido"
+              placeholder="Apellido"
+              value={formData.apellido}
+              onChange={handleChange}
+              className="border w-full p-2 rounded mb-2 text-sm"
+            />
+
+            <input
+              name="email"
+              placeholder="Correo"
+              value={formData.email}
+              onChange={handleChange}
+              className="border w-full p-2 rounded mb-2 text-sm"
+            />
+
+            <input
+              name="telefono"
+              placeholder="Teléfono"
+              value={formData.telefono}
+              onChange={handleChange}
+              className="border w-full p-2 rounded mb-4 text-sm"
+            />
+
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setOpenModal(false)}
+                className="text-gray-700 px-3 py-1 text-sm"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={guardarCambios}
+                className="bg-blue-600 text-white px-3 py-1 text-sm rounded hover:bg-blue-700"
+              >
+                Guardar
+              </button>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }

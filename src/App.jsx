@@ -1,5 +1,5 @@
 import { Routes, Route, useLocation, Navigate } from "react-router-dom";
-import { AnimatePresence } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 
 // ✅ LOGIN
 import Login from "./pages/Login/Login2.jsx";
@@ -19,6 +19,7 @@ import PerfilEstudiante from "./pages/Estudiante/PerfilEstudiante.jsx";
 import CursoDetails from "./pages/Detallescurso/CursoDetails.jsx";
 import Pay from "./pages/Pagos/Pay.jsx";
 import EstudianteEST from "./pages/Estudiante/EstadisticasEST.jsx";
+import Cursos from "./pages/Detallescurso/CursosList.jsx";
 
 // ✅ DOCENTE
 import Docente from "./pages/Docentes/DashboarDocente.jsx";
@@ -34,139 +35,48 @@ function App() {
   return (
     <div className="bg-white min-h-screen overflow-auto">
       <AnimatePresence mode="wait">
-        <Routes location={location} key={location.pathname}>
-          {/* LOGIN (pantalla inicial) */}
-          <Route path="/" element={<Login />} />
+        {/* ✅ Mueve la animación a un motion.div y NO al Routes directamente */}
+        <motion.div
+          key={location.pathname}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.2 }}
+        >
+          <Routes location={location}>
+            {/* LOGIN */}
+            <Route path="/" element={<Login />} />
 
-          {/* 🛠️ ADMIN */}
-          <Route
-            path="/admin"
-            element={
-              <ProtectedRoute allowedRole="admin">
-                <Admin />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/registrar-estudiante"
-            element={
-              <ProtectedRoute allowedRole="admin">
-                <RegistrarEstudiante />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/registrar-docente"
-            element={
-              <ProtectedRoute allowedRole="admin">
-                <RegistrarDocente />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/registrar-admin"
-            element={
-              <ProtectedRoute allowedRole="admin">
-                <RegistrarAdmin />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/registrar-curso"
-            element={
-              <ProtectedRoute allowedRole="admin">
-                <RegistrarCurso />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/registrar-seccion"
-            element={
-              <ProtectedRoute allowedRole="admin">
-                <RegistrarSeccion />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/ConfiguracionAdmin"
-            element={
-              <ProtectedRoute allowedRole="admin">
-                <Configuracion />
-              </ProtectedRoute>
-            }
-          />
+            {/* ADMIN */}
+            <Route path="/admin" element={<Admin />} />
+            <Route
+              path="/registrar-estudiante"
+              element={<RegistrarEstudiante />}
+            />
+            <Route path="/registrar-docente" element={<RegistrarDocente />} />
+            <Route path="/registrar-admin" element={<RegistrarAdmin />} />
+            <Route path="/registrar-curso" element={<RegistrarCurso />} />
+            <Route path="/registrar-seccion" element={<RegistrarSeccion />} />
+            <Route path="/ConfiguracionAdmin" element={<Configuracion />} />
 
-          {/* 🎓 ESTUDIANTE */}
-          <Route
-            path="/estudiante"
-            element={
-              <ProtectedRoute allowedRole="estudiante">
-                <Estudiante />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/PerfilEstudiante"
-            element={
-              <ProtectedRoute allowedRole="estudiante">
-                <PerfilEstudiante />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/DetallesCurso"
-            element={
-              <ProtectedRoute allowedRole="estudiante">
-                <CursoDetails />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/Pagos"
-            element={
-              <ProtectedRoute allowedRole="estudiante">
-                <Pay />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/EstudianteEST"
-            element={
-              <ProtectedRoute allowedRole="estudiante">
-                <EstudianteEST />
-              </ProtectedRoute>
-            }
-          />
+            {/* ESTUDIANTE */}
+            <Route path="/estudiante" element={<Estudiante />} />
+            <Route path="/PerfilEstudiante" element={<PerfilEstudiante />} />
+            <Route path="/DetalleCursos/:id" element={<CursoDetails />} />
+            <Route path="/Pagos" element={<Pay />} />
+            <Route path="/EstudianteEST" element={<EstudianteEST />} />
+            <Route path="/cursosList" element={<Cursos />} />
+            <Route path="/DashboardDocente" element={<Docente />} />
+            <Route path="/Seccion" element={<Seccion1 />} />
+            <Route path="/PublicarNotas" element={<Notas />} />
 
-          {/* 🧑‍🏫 DOCENTE */}
-          <Route
-            path="/DashboardDocente"
-            element={
-              <ProtectedRoute allowedRole="docente">
-                <Docente />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/Seccion"
-            element={
-              <ProtectedRoute allowedRole="docente">
-                <Seccion1 />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/PublicarNotas"
-            element={
-              <ProtectedRoute allowedRole="docente">
-                <Notas />
-              </ProtectedRoute>
-            }
-          />
+            {/* Fallback */}
+            <Route path="*" element={<Navigate to="/" replace />} />
 
-          {/* 🚫 RUTA POR DEFECTO */}
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
+            {/* 🚫 RUTA POR DEFECTO */}
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </motion.div>
       </AnimatePresence>
     </div>
   );

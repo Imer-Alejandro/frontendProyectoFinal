@@ -1,15 +1,39 @@
+import React, { useContext } from "react";
 import { Navigate } from "react-router-dom";
+import { AuthContext } from "../context/AuthContext";
 
-export default function ProtectedRoute({ allowedRole, children }) {
-  const role = localStorage.getItem("role");
+const ProtectedRoute = ({ children, allowedRole }) => {
+  const { user, isAuthenticated, isLoading } = useContext(AuthContext);
 
-  if (!role) {
+  console.log("🧭 ProtectedRoute Check:", {
+    isAuthenticated,
+    isLoading,
+    user,
+    allowedRole,
+  });
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center h-screen text-xl">
+        Cargando sesión...
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    console.log("❌ Usuario no autenticado → redirigiendo al login");
     return <Navigate to="/" replace />;
   }
 
-  if (role !== allowedRole) {
+  if (allowedRole && user?.rol?.toUpperCase() !== allowedRole) {
+    console.log(
+      `🚫 Acceso denegado. Rol usuario: ${user?.rol}, Requerido: ${allowedRole}`
+    );
     return <Navigate to="/" replace />;
   }
 
+  console.log("✅ Acceso permitido a", allowedRole);
   return children;
-}
+};
+
+export default ProtectedRoute;

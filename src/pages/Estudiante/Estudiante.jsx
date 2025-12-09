@@ -1,78 +1,84 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { useNavigate } from "react-router-dom";
+import { AuthContext } from "../../context/AuthContext";
 
 export default function Estudiante() {
-  const navigate = useNavigate(); // 👈 Hook para navegar
-  const [dropdownOpen, setDropdownOpen] = useState(false); // Para el dropdown
+  const navigate = useNavigate();
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const { user } = useContext(AuthContext);
+
+  const [cursoActual, setCursoActual] = useState(null);
+  const [recomendados, setRecomendados] = useState([]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        // 📌 Si el estudiante está inscrito en un curso cargar info
+        if (user?.curso_actual_id) {
+          const res = await fetch(
+            `https://servidor-proyecto-final-itla.vercel.app/api/cursos/${user.curso_actual_id}`
+          );
+          setCursoActual(await res.json());
+        }
+
+        // ⭐ Cursos programados para recomendar
+        const res2 = await fetch(
+          "https://servidor-proyecto-final-itla.vercel.app/api/cursos"
+        );
+        const cursos = await res2.json();
+        setRecomendados(cursos.filter((c) => c.estado === "programado"));
+      } catch (err) {
+        console.error("❌ Error cargando datos dashboard", err);
+      }
+    };
+
+    fetchData();
+  }, [user]);
 
   return (
-    <div className="min-h-screen bg-gray-100 flex flex-col">
+    <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="sticky top-0 z-50 bg-white shadow p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <input
-          type="text"
-          placeholder="Buscar cursos..."
-          className="w-full sm:w-1/2 px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
-
-        {/* Botón para ver cursos */}
+      <header className="bg-white shadow p-4 flex justify-between items-center">
         <button
-          onClick={() => navigate("/")} // ✅ Navega correctamente
-          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
+          onClick={() => navigate("/cursosList")}
+          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
         >
           Ver cursos disponibles
         </button>
 
-        {/* Botón usuario con dropdown */}
-        <div className="relative">
+        <div className="relative ">
           <button
-            className="flex items-center gap-2 bg-white px-4 py-2 rounded shadow hover:shadow-md transition"
-            onClick={() => setDropdownOpen((prev) => !prev)}
+            onClick={() => setDropdownOpen(!dropdownOpen)}
+            className="flex cursor-pointer items-center gap-2 px-4 py-2 w-[200px] bg-gray-200 rounded"
           >
-            <div className="bg-gray-800 text-white w-8 h-8 flex items-center justify-center rounded-full text-sm font-medium">
-              NU
+            <div className="bg-teal-500 text-white w-10 h-10 flex items-center justify-center rounded-full font-bold text-sm">
+              {`${user?.nombre?.charAt(0) || ""}${
+                user?.apellido?.charAt(0) || ""
+              }`.toUpperCase()}
             </div>
-            <span className="font-semibold text-sm sm:text-base">Nombre usuario ▼</span>
+            {user?.nombre} {user?.apellido}
           </button>
 
-          {/* Dropdown */}
           {dropdownOpen && (
-            <div className="absolute right-0 mt-2 w-44 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
+            <div className="absolute right-0 bg-white shadow border rounded mt-2">
               <button
-                className="w-full text-left px-4 py-2 hover:bg-gray-100"
                 onClick={() => navigate("/PerfilEstudiante")}
+                className="px-4 py-2 block hover:bg-gray-100 w-full text-left"
               >
                 Perfil
               </button>
-
               <button
-                className="w-full text-left px-4 py-2 hover:bg-gray-100"
-                onClick={() => navigate("/EstudianteEST")}
-              >
-                Dashboar estudiante
-              </button>
-
-              <button
-                className="w-full text-left px-4 py-2 hover:bg-gray-100"
-                onClick={() =>
-                   navigate("/Pagos")}
+                onClick={() => navigate("/Pagos")}
+                className="px-4 py-2 block hover:bg-gray-100 w-full text-left"
               >
                 Pagos
               </button>
-
-               <button
-                className="w-full text-left px-4 py-2 hover:bg-gray-100"
-                onClick={() =>
-                   navigate("/DetallesCurso")}
-              >
-                Detalles del curso
-              </button>
               <button
-                className="w-full text-left px-4 py-2 hover:bg-gray-100 text-red-600"
                 onClick={() => {
                   localStorage.removeItem("role");
-                  navigate("/PerfilEstudiante");
+                  navigate("/");
                 }}
+                className="px-4 py-2 block hover:bg-gray-100 w-full text-left text-red-600"
               >
                 Cerrar sesión
               </button>
@@ -81,85 +87,87 @@ export default function Estudiante() {
         </div>
       </header>
 
-      {/* Banner */}
-      <section className="relative w-full bg-blue-900 text-white rounded-lg mt-12 sm:mt-16 mx-auto max-w-7xl h-40 sm:h-48 flex items-center justify-center shadow-lg">
-        <h2 className="text-xl sm:text-2xl font-semibold">Panel de Cursos</h2>
+      <main className="max-w-6xl mx-auto p-6 space-y-10">
+        {/* Curso actual */}
+        <section className="bg-white p-6 rounded shadow">
+          <h2 className="text-xl font-bold mb-4">📘 Tu curso actual</h2>
 
-        {/* Tarjetas sobre el banner */}
-        <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 flex flex-col sm:flex-row gap-6 sm:gap-20">
-          <div className="bg-sky-500 text-white px-6 py-4 rounded-lg shadow-lg w-60 hover:scale-105 transition-transform duration-300">
-            <h3 className="font-semibold text-lg">Cursos completados</h3>
-            <p className="text-sm mt-1">
-              Total de cursos completados <b>45</b>
+          {!cursoActual ? (
+            <p className="text-gray-500 text-sm">
+              No estás inscrito en ningún curso actualmente.
             </p>
-          </div>
-          <div className="bg-emerald-500 text-white px-6 py-4 rounded-lg shadow-lg w-60 hover:scale-105 transition-transform duration-300">
-            <h3 className="font-semibold text-lg">Cursos no completados</h3>
-            <p className="text-sm mt-1">
-              Total de cursos no completados <b>45</b>
-            </p>
-          </div>
-          <div className="bg-blue-600 text-white px-6 py-4 rounded-lg shadow-lg w-60 hover:scale-105 transition-transform duration-300">
-            <h3 className="font-semibold text-lg">Estadísticas</h3>
-            <p className="text-sm mt-1">Estado de calificaciones y cursos</p>
-          </div>
-        </div>
-      </section>
+          ) : (
+            <div>
+              <h3 className="font-semibold text-lg">{cursoActual.nombre}</h3>
+              <p className="text-gray-600 mt-1 text-sm">
+                {cursoActual.descripcion}
+              </p>
 
-      {/* Tabla */}
-      <main className="flex-1 mt-20 p-6 overflow-x-auto">
-        <div className="bg-white shadow-lg rounded-lg overflow-hidden">
-          <table className="min-w-full">
-            <thead className="bg-gray-100">
-              <tr>
-                {[
-                  "Nombre",
-                  "Descripción",
-                  "Requisitos",
-                  "Costo",
-                  "Fecha de inicio",
-                  "Fecha de finalización",
-                  "Estado",
-                ].map((head, i) => (
-                  <th
-                    key={i}
-                    className="px-4 py-3 text-left text-gray-700 font-semibold text-sm"
-                  >
-                    {head}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {[...Array(5)].map((_, i) => (
-                <tr
-                  key={i}
-                  className="border-t hover:bg-gray-50 transition-colors"
+              <div className="mt-3 text-sm">
+                <p>
+                  <strong>Inicio:</strong>{" "}
+                  {new Date(cursoActual.fecha_inicio).toLocaleDateString()}
+                </p>
+                <p>
+                  <strong>Fin:</strong>{" "}
+                  {new Date(cursoActual.fecha_fin).toLocaleDateString()}
+                </p>
+              </div>
+            </div>
+          )}
+        </section>
+
+        {/* Recordatorios */}
+        {cursoActual && (
+          <section className="bg-blue-700 text-white p-6 rounded shadow">
+            <h2 className="text-xl font-bold mb-2">🔔 Recordatorios</h2>
+            <p className="text-sm">
+              Límite de inscripción:{" "}
+              <strong>
+                {new Date(
+                  cursoActual.fecha_limite_inscripcion
+                ).toLocaleDateString()}
+              </strong>
+            </p>
+            <p className="text-sm mt-1">
+              Asegúrate de completar tu curso antes del{" "}
+              <strong>
+                {new Date(cursoActual.fecha_fin).toLocaleDateString()}
+              </strong>
+            </p>
+          </section>
+        )}
+
+        {/* Cursos recomendados */}
+        <section>
+          <h2 className="text-xl font-bold mb-4">
+            ⭐ Cursos recomendados para ti
+          </h2>
+
+          {recomendados.length === 0 ? (
+            <p className="text-gray-500 text-sm">
+              No hay cursos disponibles ahora.
+            </p>
+          ) : (
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {recomendados.map((curso) => (
+                <div
+                  key={curso.curso_id}
+                  className="bg-white p-4 rounded shadow hover:shadow-lg transition cursor-pointer"
+                  onClick={() => navigate(`/DetalleCursos/${curso.curso_id}`)}
                 >
-                  <td className="px-4 py-3 font-medium">
-                    Introducción a la programación
-                  </td>
-                  <td className="px-4 py-3 text-gray-600 text-sm">
-                    En este curso te mostraremos la manera...
-                  </td>
-                  <td className="px-4 py-3 text-gray-600 text-sm">
-                    Conocimientos de lógica y matemática
-                  </td>
-                  <td className="px-4 py-3 text-gray-600 font-medium">3,500</td>
-                  <td className="px-4 py-3 text-gray-600">4 de julio 2025</td>
-                  <td className="px-4 py-3 text-gray-600">
-                    4 de septiembre 2025
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className="inline-block bg-green-500 text-white text-xs px-3 py-1 rounded-full font-medium">
-                      Finalizado
-                    </span>
-                  </td>
-                </tr>
+                  <h3 className="font-semibold text-lg">{curso.nombre}</h3>
+                  <p className="text-xs text-gray-600 mt-1 line-clamp-3">
+                    {curso.descripcion}
+                  </p>
+                  <p className="text-blue-600 mt-2 font-bold text-sm">
+                    RD$ {parseFloat(curso.costo_total).toLocaleString()}
+                  </p>
+                </div>
               ))}
-            </tbody>
-          </table>
-        </div>
+            </div>
+          )}
+        </section>
       </main>
     </div>
   );

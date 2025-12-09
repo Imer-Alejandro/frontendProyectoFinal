@@ -1,38 +1,67 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Mail, Lock, Loader2 } from "lucide-react";
+import { AuthContext } from "../../context/AuthContext";
+import api from "../../api/axiosConfig";
 
 export default function Login() {
-  console.log("Login2.jsx renderizado");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const { login } = useContext(AuthContext);
   const navigate = useNavigate();
+  // Estados del modal y registro
+  const [showRegister, setShowRegister] = useState(false);
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
     setIsLoading(true);
 
-    setTimeout(() => {
-      if (email === "admin@correo.com" && password === "1234") {
-        localStorage.setItem("role", "admin");
-        navigate("/admin");
-      } else if (email === "estudiante@correo.com" && password === "1234") {
-        localStorage.setItem("role", "estudiante");
-        navigate("/estudiante");
-      } else if (email === "docente@correo.com" && password === "1234") {
-        localStorage.setItem("role", "docente");
-        navigate("/DashboardDocente");
-      } else {
-        alert("Correo o contraseña incorrectos");
+    try {
+      const { data } = await api.post("/usuarios/login", { email, password });
+      console.log("🔍 Datos recibidos del backend:", data);
+
+      if (!data?.data) {
+        alert("Credenciales incorrectas");
+        return;
       }
+
+      const userDB = data.data;
+
+      const userData = {
+        usuario_id: userDB.usuario_id,
+        nombre: userDB.nombre,
+        apellido: userDB.apellido,
+        email: userDB.email,
+        rol: userDB.rol?.toUpperCase(),
+        telefono: userDB.telefono,
+        estado: userDB.estado,
+        matricula: userDB.matricula,
+        curso_actual_id: userDB.curso_actual_id,
+        especialidad: userDB.especialidad,
+        titulo_academico: userDB.titulo_academico,
+        fecha_ingreso: userDB.fecha_ingreso,
+      };
+
+      console.log("💾 Guardando sesión:", userData);
+      login(userData);
+
+      // Redirección por rol
+      if (userData.rol === "ADMIN") navigate("/admin");
+      else if (userData.rol === "DOCENTE") navigate("/DashboardDocente");
+      else if (userData.rol === "ESTUDIANTE") navigate("/estudiante");
+      else alert("Rol desconocido en el sistema.");
+    } catch (error) {
+      console.error("❌ Error en login:", error);
+      alert("Error en credenciales o conexión");
+    } finally {
       setIsLoading(false);
-    }, 1500);
+    }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 flex items-center justify-center p-4 overflow-hidden">
+    <div className="min-h-screen bg-linear-to-br from-purple-50 via-pink-50 to-blue-50 flex items-center justify-center p-4 overflow-hidden">
       <div className="absolute inset-0 bg-grid-slate-100 opacity-20 pointer-events-none"></div>
 
       <motion.div
@@ -47,7 +76,7 @@ export default function Login() {
             initial={{ x: -100, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
             transition={{ duration: 0.7, delay: 0.2 }}
-            className="hidden md:flex relative w-1/2 bg-gradient-to-br from-violet-600 via-purple-600 to-indigo-700 p-12 items-center justify-center overflow-hidden"
+            className="hidden md:flex relative w-1/2 bg-linear-to-br from-violet-600 via-purple-600 to-indigo-700 p-12 items-center justify-center overflow-hidden"
           >
             <div className="absolute inset-0 opacity-20">
               <div className="absolute top-10 left-10 w-72 h-72 bg-white rounded-full blur-3xl animate-pulse"></div>
@@ -109,7 +138,7 @@ export default function Login() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.5 }}
             >
-              <h1 className="text-4xl lg:text-5xl font-bold text-gray-800 bg-clip-text text-transparent bg-gradient-to-r from-violet-600 to-blue-600">
+              <h1 className="text-4xl lg:text-5xl font-bold text-gray-800 bg-clip-text bg-linear-to-r from-violet-600 to-blue-600">
                 Bienvenido
               </h1>
               <p className="font-medium text-lg text-gray-500 mt-2">
@@ -170,7 +199,10 @@ export default function Login() {
                 className="flex justify-between items-center"
               >
                 <label className="flex items-center gap-2 text-gray-700 font-medium cursor-pointer">
-                  <input type="checkbox" className="w-5 h-5 text-violet-600 rounded focus:ring-violet-500" />
+                  <input
+                    type="checkbox"
+                    className="w-5 h-5 text-violet-600 rounded focus:ring-violet-500"
+                  />
                   Recuérdame
                 </label>
                 <button
@@ -192,7 +224,7 @@ export default function Login() {
                   whileTap={{ scale: 0.98 }}
                   type="submit"
                   disabled={isLoading}
-                  className="w-full bg-gradient-to-r from-violet-600 to-indigo-600 text-white py-4 rounded-xl text-lg font-bold shadow-lg hover:shadow-xl flex items-center justify-center gap-3 transition-all duration-300 disabled:opacity-80"
+                  className="w-full bg-linear-to-r from-violet-600 to-indigo-600 text-white py-4 rounded-xl text-lg font-bold shadow-lg hover:shadow-xl flex items-center justify-center gap-3 transition-all duration-300 disabled:opacity-80"
                 >
                   {isLoading ? (
                     <>
@@ -214,7 +246,10 @@ export default function Login() {
             >
               <p className="font-medium text-base text-gray-600">
                 ¿No tienes una cuenta?{" "}
-                <button className="text-violet-600 font-bold hover:underline transition">
+                <button
+                  className="text-violet-600 font-bold hover:underline transition"
+                  onClick={() => setShowRegister(true)}
+                >
                   Solicita una
                 </button>
               </p>
@@ -222,6 +257,102 @@ export default function Login() {
           </motion.div>
         </div>
       </motion.div>
+      {showRegister && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
+          <motion.div
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 0.3 }}
+            className="bg-white w-full max-w-lg p-8 rounded-3xl shadow-2xl relative"
+          >
+            <button
+              className="absolute top-4 right-4 text-gray-500 text-xl hover:text-gray-700"
+              onClick={() => setShowRegister(false)}
+            >
+              ✕
+            </button>
+
+            <h2 className="text-3xl font-bold text-gray-800 text-center mb-6 bg-clip-text bg-linear-to-r from-violet-600 to-blue-600">
+              Crear Cuenta Estudiante
+            </h2>
+
+            <form onSubmit={handleRegister} className="space-y-4">
+              <div>
+                <label className="text-gray-700 font-medium">Nombre</label>
+                <input
+                  type="text"
+                  required
+                  className="w-full border-2 border-gray-300 rounded-xl p-3 mt-1"
+                  value={regData.nombre}
+                  onChange={(e) =>
+                    setRegData({ ...regData, nombre: e.target.value })
+                  }
+                />
+              </div>
+
+              <div>
+                <label className="text-gray-700 font-medium">Apellido</label>
+                <input
+                  type="text"
+                  required
+                  className="w-full border-2 border-gray-300 rounded-xl p-3 mt-1"
+                  value={regData.apellido}
+                  onChange={(e) =>
+                    setRegData({ ...regData, apellido: e.target.value })
+                  }
+                />
+              </div>
+
+              <div>
+                <label className="text-gray-700 font-medium">Correo</label>
+                <input
+                  type="email"
+                  required
+                  className="w-full border-2 border-gray-300 rounded-xl p-3 mt-1"
+                  value={regData.email}
+                  onChange={(e) =>
+                    setRegData({ ...regData, email: e.target.value })
+                  }
+                />
+              </div>
+
+              <div>
+                <label className="text-gray-700 font-medium">Contraseña</label>
+                <input
+                  type="password"
+                  required
+                  className="w-full border-2 border-gray-300 rounded-xl p-3 mt-1"
+                  value={regData.password}
+                  onChange={(e) =>
+                    setRegData({ ...regData, password: e.target.value })
+                  }
+                />
+              </div>
+
+              <div>
+                <label className="text-gray-700 font-medium">Teléfono</label>
+                <input
+                  type="text"
+                  required
+                  className="w-full border-2 border-gray-300 rounded-xl p-3 mt-1"
+                  value={regData.telefono}
+                  onChange={(e) =>
+                    setRegData({ ...regData, telefono: e.target.value })
+                  }
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="w-full bg-linear-to-r from-violet-600 to-indigo-600 text-white py-3 rounded-xl text-lg font-bold mt-4 shadow-md hover:shadow-lg transition-all"
+              >
+                {isLoading ? "Registrando..." : "Crear Cuenta"}
+              </button>
+            </form>
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 }

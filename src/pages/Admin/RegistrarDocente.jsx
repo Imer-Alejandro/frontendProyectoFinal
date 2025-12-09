@@ -1,102 +1,169 @@
 import { useNavigate } from "react-router-dom";
+import { useState } from "react";
 
 export default function RegistrarDocente() {
   const navigate = useNavigate();
 
+  // Estado del formulario
+  const [form, setForm] = useState({
+    nombre: "",
+    apellido: "",
+    telefono: "",
+    email: "",
+    especialidad: "",
+    titulo_academico: "",
+    password: "",
+  });
+
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  // Manejar cambios en inputs
+  const handleChange = (e) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  // Submit del formulario
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError("");
+
+    try {
+      const res = await fetch(
+        "https://servidor-proyecto-final-itla.vercel.app/api/usuarios/registro",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            ...form,
+            rol: "DOCENTE", // 👈 Se envía el rol automáticamente
+          }),
+        }
+      );
+
+      const data = await res.json();
+
+      if (!res.ok) throw new Error(data.message || "Error al registrar");
+
+      alert("Docente registrado exitosamente");
+      navigate(-1);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen flex">
-      {/* Lado Izquierdo - Formulario */}
-      <div className="w-full lg:w-1/2 bg-blue-700 flex flex-col justify-center items-center p-8 lg:p-16 relative">
-        {/* Botón Volver (arriba a la izquierda) */}
-        <button
-          onClick={() => navigate(-1)}
-          className="absolute top-6 left-6 text-blue-200 hover:text-white transition text-sm font-medium"
-        >
-          ← Volver
-        </button>
+      {/* Botón Volver */}
+      <button
+        onClick={() => navigate(-1)}
+        className="absolute top-6 left-6 text-blue-200 hover:text-white text-sm font-medium"
+      >
+        ← Volver
+      </button>
 
-        <div className="w-full max-w-md mt-10 lg:mt-0">
-          {/* Logo y Título */}
+      {/* Lado izquierdo */}
+      <div className="w-full lg:w-1/2 bg-blue-700 flex flex-col justify-center items-center p-8 lg:p-16">
+        <div className="w-full max-w-md">
+          {/* Título */}
           <div className="text-center mb-8">
-            <div className="flex justify-center mb-4">
-              <div className="bg-white p-3 rounded-lg shadow-lg">
-                <svg
-                  className="w-12 h-12 text-blue-700"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M12 14l9-5-9-5-9 5 9 5z"
-                  />
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M12 14v7m-3-3h6"
-                  />
-                </svg>
-              </div>
-            </div>
             <h1 className="text-3xl font-bold text-white">ERP Académico</h1>
             <p className="text-blue-200 text-sm">Registro de Docente</p>
           </div>
 
+          {/* Mostrar error */}
+          {error && (
+            <p className="bg-red-500 text-white px-4 py-2 rounded mb-3 text-center">
+              {error}
+            </p>
+          )}
+
           {/* Formulario */}
-          <form className="space-y-4">
+          <form className="space-y-4" onSubmit={handleSubmit}>
             <div className="grid grid-cols-2 gap-4">
               <input
                 type="text"
+                name="nombre"
                 placeholder="Nombre"
-                className="w-full px-4 py-3 bg-blue-600 text-white placeholder-blue-300 border border-blue-500 rounded-md focus:outline-none focus:ring-2 focus:ring-white"
+                value={form.nombre}
+                onChange={handleChange}
+                required
+                className="w-full px-4 py-3 bg-blue-600 text-white border border-blue-500 rounded-md"
               />
+
               <input
                 type="text"
+                name="apellido"
                 placeholder="Apellido"
-                className="w-full px-4 py-3 bg-blue-600 text-white placeholder-blue-300 border border-blue-500 rounded-md focus:outline-none focus:ring-2 focus:ring-white"
+                value={form.apellido}
+                onChange={handleChange}
+                required
+                className="w-full px-4 py-3 bg-blue-600 text-white border border-blue-500 rounded-md"
               />
             </div>
 
             <input
               type="tel"
+              name="telefono"
               placeholder="Teléfono"
-              className="w-full px-4 py-3 bg-blue-600 text-white placeholder-blue-300 border border-blue-500 rounded-md focus:outline-none focus:ring-2 focus:ring-white"
+              value={form.telefono}
+              onChange={handleChange}
+              required
+              className="w-full px-4 py-3 bg-blue-600 text-white border border-blue-500 rounded-md"
             />
 
             <input
               type="email"
+              name="email"
               placeholder="Correo institucional"
-              className="w-full px-4 py-3 bg-blue-600 text-white placeholder-blue-300 border border-blue-500 rounded-md focus:outline-none focus:ring-2 focus:ring-white"
+              value={form.email}
+              onChange={handleChange}
+              required
+              className="w-full px-4 py-3 bg-blue-600 text-white border border-blue-500 rounded-md"
             />
 
             <input
               type="text"
+              name="especialidad"
               placeholder="Especialidad"
-              className="w-full px-4 py-3 bg-blue-600 text-white placeholder-blue-300 border border-blue-500 rounded-md focus:outline-none focus:ring-2 focus:ring-white"
+              value={form.especialidad}
+              onChange={handleChange}
+              required
+              className="w-full px-4 py-3 bg-blue-600 text-white border border-blue-500 rounded-md"
             />
 
-            <select className="w-full px-4 py-3 bg-blue-600 text-white border border-blue-500 rounded-md focus:outline-none focus:ring-2 focus:ring-white">
+            <select
+              name="titulo_academico"
+              value={form.titulo_academico}
+              onChange={handleChange}
+              required
+              className="w-full px-4 py-3 bg-blue-600 text-white border border-blue-500 rounded-md"
+            >
               <option value="">Título académico</option>
-              <option value="lic">Licenciatura</option>
-              <option value="mas">Maestría</option>
-              <option value="doc">Doctorado</option>
+              <option value="Licenciatura">Licenciatura</option>
+              <option value="Maestría">Maestría</option>
+              <option value="Doctorado">Doctorado</option>
             </select>
 
             <input
               type="password"
+              name="password"
               placeholder="Contraseña temporal"
-              className="w-full px-4 py-3 bg-blue-600 text-white placeholder-blue-300 border border-blue-500 rounded-md focus:outline-none focus:ring-2 focus:ring-white"
+              value={form.password}
+              onChange={handleChange}
+              required
+              className="w-full px-4 py-3 bg-blue-600 text-white border border-blue-500 rounded-md"
             />
 
             <button
               type="submit"
-              className="w-full py-3 bg-blue-800 hover:bg-blue-900 text-white font-semibold rounded-md transition duration-200"
+              disabled={loading}
+              className="w-full py-3 bg-blue-800 hover:bg-blue-900 text-white font-semibold rounded-md transition"
             >
-              Registrar docente
+              {loading ? "Registrando..." : "Registrar docente"}
             </button>
           </form>
 
@@ -112,14 +179,15 @@ export default function RegistrarDocente() {
         </div>
       </div>
 
-      {/* Lado Derecho - Imagen */}
+      {/* Lado derecho */}
       <div
         className="hidden lg:block w-1/2 bg-cover bg-center"
         style={{
-          backgroundImage: `url('https://images.unsplash.com/photo-1553877522-43269d4ea984?ixlib=rb-4.0.3&auto=format&fit=crop&w=1740&q=80')`,
+          backgroundImage:
+            "url('https://images.unsplash.com/photo-1553877522-43269d4ea984?auto=format&fit=crop&w=1740&q=80')",
         }}
       >
-        <div className="h-full bg-gradient-to-t from-blue-900 via-transparent to-transparent opacity-60"></div>
+        <div className="h-full bg-linear-to-t from-blue-900 via-transparent to-transparent opacity-60"></div>
       </div>
     </div>
   );

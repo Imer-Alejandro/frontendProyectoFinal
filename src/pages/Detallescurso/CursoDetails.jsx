@@ -1,128 +1,242 @@
-import React from "react";
+import React, { useEffect, useState, useContext } from "react";
+import { useParams } from "react-router-dom";
+import { AuthContext } from "../../context/AuthContext";
 
-const PaginaDeCurso = () => {
+export default function CursoDetails() {
+  const { id } = useParams();
+  const [curso, setCurso] = useState(null);
+  const [maestros, setMaestros] = useState([]);
+  const [cargando, setCargando] = useState(true);
+
+  const { user } = useContext(AuthContext);
+
+  // ⭐ NUEVO: control modal y loading
+  const [mostrarModal, setMostrarModal] = useState(false);
+  const [enviando, setEnviando] = useState(false);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const resCurso = await fetch(
+          `https://servidor-proyecto-final-itla.vercel.app/api/cursos/${id}`
+        );
+        const dataCurso = await resCurso.json();
+        setCurso(dataCurso);
+
+        const resSec = await fetch(
+          "https://servidor-proyecto-final-itla.vercel.app/api/secciones"
+        );
+        const dataSec = await resSec.json();
+        const maestrosFiltrados = dataSec.filter(
+          (s) => Number(s.curso_id) === Number(id)
+        );
+
+        setMaestros(maestrosFiltrados);
+      } catch (error) {
+        console.error("Error al cargar datos:", error);
+      } finally {
+        setCargando(false);
+      }
+    };
+
+    fetchData();
+  }, [id]);
+
+  // ⭐ FUNCIÓN NUEVA: API de inscripción
+  const inscribirEstudiante = async (seccion_id) => {
+    try {
+      setEnviando(true);
+      const res = await fetch(
+        "https://servidor-proyecto-final-itla.vercel.app/api/inscripcion",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            estudiante_id: user.usuario_id,
+            seccion_id,
+          }),
+        }
+      );
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+
+      alert("¡Inscripción completada con éxito! 🎉");
+      setMostrarModal(false);
+    } catch (err) {
+      alert("Error al inscribir: " + err.message);
+    } finally {
+      setEnviando(false);
+    }
+  };
+
+  if (cargando)
+    return (
+      <div className="min-h-screen flex items-center justify-center text-xl">
+        Cargando información...
+      </div>
+    );
+
+  if (!curso) return <p>Error: No se encontró el curso.</p>;
+
   return (
     <div className="font-sans bg-gray-100 text-gray-800 min-h-screen">
-      {/* Header - Barra de búsqueda con botón Regresar */}
+      {/* Header */}
       <header className="flex justify-between items-center bg-white px-5 py-3 shadow-sm">
-        {/* Botón Regresar */}
         <button
           onClick={() => window.history.back()}
           className="flex items-center gap-2 text-gray-700 hover:text-[#24324a] font-medium text-sm transition-colors"
         >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-5 w-5"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            strokeWidth={2}
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M15 19l-7-7 7-7"
-            />
-          </svg>
-          Regresar
+          ← Regresar
         </button>
 
-        {/* Barra de búsqueda */}
-        <input
-          type="text"
-          placeholder="Buscar cursos..."
-          className="w-80 px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
-
-        {/* Botón NU */}
         <button className="bg-[#24324a] text-white font-bold px-4 py-2 rounded-md">
-          NU
+          {`${user?.nombre?.charAt(0) || ""}${
+            user?.apellido?.charAt(0) || ""
+          }`.toUpperCase()}
         </button>
       </header>
 
-      {/* Main Content */}
+      {/* Contenido */}
       <main className="flex justify-between p-8 gap-8">
-        {/* Sección principal: Info del curso */}
+        {/* Información del curso */}
         <section className="flex-2 bg-white rounded-lg p-6 shadow-sm">
-          {/* Banner del curso */}
           <div className="bg-[#24324a] text-white p-8 rounded-lg mb-6">
-            <h1 className="text-2xl font-bold mb-1">
-              Introducción a la programación orientada a objeto
-            </h1>
-            <p className="text-sm opacity-80">sesiones disponibles - 2</p>
+            <h1 className="text-2xl font-bold mb-1">{curso.nombre}</h1>
+            <p className="text-sm opacity-80">
+              Sesiones disponibles - {maestros.length}
+            </p>
           </div>
 
-          {/* Detalles del curso */}
           <div>
             <h3 className="text-lg font-semibold mt-6 mb-3">Detalles</h3>
             <p className="text-sm leading-relaxed text-gray-700">
-              Este es un curso que busca que el estudiante consiga aprender todos
-              los fundamentos y lógica detrás de la programación orientada a
-              objeto aplicando en la práctica las teorías correspondientes para
-              concretar el conocimiento adquirido en proyectos durante todo el
-              curso.
+              {curso.descripcion}
             </p>
 
             <h3 className="text-lg font-semibold mt-6 mb-3">Requisitos</h3>
-            <ul className="list-disc list-inside text-sm text-gray-700 space-y-1 ml-4">
-              <li>Dominio de algún lenguaje</li>
-              <li>Conocimiento en otro tipo de paradigma</li>
-              <li>Disponibilidad de internet</li>
-              <li>Disponibilidad de al menos 5 horas prácticas</li>
-            </ul>
+            <p className="text-sm text-gray-700">{curso.requisitos}</p>
 
-            <h3 className="text-lg font-semibold mt-6 mb-3">Fechas importantes</h3>
+            <h3 className="text-lg font-semibold mt-6 mb-3">
+              Fechas importantes
+            </h3>
             <p className="text-sm">
               <strong>Inicio:</strong>{" "}
               <span className="text-[#276ef1] font-medium">
-                14 de noviembre del 2025
+                {curso.fecha_inicio
+                  ? new Date(curso.fecha_inicio).toLocaleDateString()
+                  : "No definido"}
               </span>
             </p>
             <p className="text-sm">
               <strong>Término:</strong>{" "}
               <span className="text-[#276ef1] font-medium">
-                14 de enero del 2026
+                {curso.fecha_fin
+                  ? new Date(curso.fecha_fin).toLocaleDateString()
+                  : "No definido"}
               </span>
             </p>
           </div>
         </section>
 
-        {/* Sidebar: Costo y Maestros */}
+        {/* Sidebar */}
         <aside className="flex-1 space-y-6">
-          {/* Tarjeta de costo */}
-          <div className="bg-[#24324a] text-white p-6 rounded-lg text-center">
+          {/* Card costo */}
+          <div className="bg-[#24324a] text-white p-6 rounded-lg text-center shadow-md">
             <p className="text-lg">
               Costo:{" "}
-              <span className="text-[#5fa8f6] text-2xl font-bold">5,600</span>
+              <span className="text-[#5fa8f6] text-2xl font-bold">
+                {curso.costo_total
+                  ? parseFloat(curso.costo_total).toLocaleString()
+                  : "N/A"}
+              </span>
             </p>
-            <button className="bg-[#3b67d8] text-white font-bold py-2 px-6 rounded-md mt-4 w-full hover:bg-blue-700 transition">
-              Inscribirse
+
+            {/* ⭐ MODIFICADO: abre modal */}
+            <button
+              disabled={maestros.length === 0}
+              onClick={() => setMostrarModal(true)}
+              className={`font-bold py-2 px-6 rounded-md mt-4 w-full transition
+                ${
+                  maestros.length === 0
+                    ? "bg-gray-400 cursor-not-allowed"
+                    : "bg-[#3b67d8] hover:bg-blue-700 text-white"
+                }`}
+            >
+              {maestros.length === 0
+                ? "Sin secciones disponibles"
+                : "Inscribirse"}
             </button>
+
             <p className="text-xs opacity-80 mt-3">
-              Inicio: 14 de noviembre del 2025
+              Límite inscripción:{" "}
+              {curso.fecha_limite_inscripcion
+                ? new Date(curso.fecha_limite_inscripcion).toLocaleDateString()
+                : "No definido"}
             </p>
           </div>
 
           {/* Maestros */}
           <div className="bg-white p-6 rounded-lg shadow-sm">
             <h3 className="text-lg font-semibold mb-4">Maestros</h3>
-            <ul className="space-y-3">
-              {["Nombre del maestro", "Nombre del maestro", "Nombre del maestro", "Nombre del maestro"].map(
-                (maestro, i) => (
-                  <li key={i} className="flex items-center">
+            {maestros.length === 0 ? (
+              <p className="text-sm text-gray-500">
+                Sin secciones asignadas aún
+              </p>
+            ) : (
+              <ul className="space-y-3">
+                {maestros.map((m) => (
+                  <li key={m.seccion_id} className="flex items-center">
                     <span className="bg-[#24324a] text-white font-bold text-sm px-3 py-1 rounded mr-3">
-                      NU
+                      {m.docente_nombre?.[0]}
+                      {m.docente_apellido?.[0]}
                     </span>
-                    <span className="text-sm text-gray-700">{maestro}</span>
+                    <span className="text-sm text-gray-700">
+                      {m.docente_nombre} {m.docente_apellido}
+                    </span>
                   </li>
-                )
-              )}
-            </ul>
+                ))}
+              </ul>
+            )}
           </div>
         </aside>
       </main>
+
+      {/* ⭐ MODAL NUEVO */}
+      {mostrarModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center">
+          <div className="bg-white w-96 rounded-lg p-6 shadow-xl">
+            <h2 className="text-xl font-bold text-center text-[#24324a] mb-4">
+              Selecciona una sección
+            </h2>
+
+            <div className="space-y-3">
+              {maestros.map((sec) => (
+                <button
+                  key={sec.seccion_id}
+                  disabled={enviando}
+                  onClick={() => inscribirEstudiante(sec.seccion_id)}
+                  className="w-full p-3 border rounded-lg text-left hover:border-[#24324a] transition"
+                >
+                  <p className="font-medium text-sm">
+                    {sec.docente_nombre} {sec.docente_apellido}
+                  </p>
+                  <p className="text-xs text-gray-600 mt-1">
+                    Cupo: {sec.inscritos}/{sec.capacidad_maxima}
+                  </p>
+                </button>
+              ))}
+            </div>
+
+            <button
+              onClick={() => setMostrarModal(false)}
+              className="w-full bg-gray-500 text-white py-2 rounded-md mt-4"
+            >
+              Cancelar
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
-};
-
-export default PaginaDeCurso;
+}
