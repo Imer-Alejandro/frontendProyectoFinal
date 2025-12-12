@@ -5,8 +5,6 @@ import {
   Users,
   Calendar,
   Phone,
-  Edit,
-  Trash2,
   Filter,
   ChevronDown,
 } from "lucide-react";
@@ -17,7 +15,7 @@ export default function AdminDashboard() {
   const [filter, setFilter] = useState("todos");
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
-  const navigate = useNavigate(); // 🔑 Necesario para navegar
+  const navigate = useNavigate();
 
   // Datos de ejemplo
   const students = [
@@ -89,24 +87,23 @@ export default function AdminDashboard() {
             <ChevronDown className="w-4 h-4 text-gray-500" />
           </button>
 
-          {/* Dropdown */}
           {dropdownOpen && (
             <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
               <button
                 className="w-full text-left px-4 py-2 hover:bg-gray-100"
-                onClick={() => navigate("/PerfilUsuario")}
+                onClick={() => navigate("/PerfilDocente")}
               >
                 Perfil
               </button>
               <button
                 className="w-full text-left px-4 py-2 hover:bg-gray-100"
-                onClick={() => navigate("/PublicarNotas")}
+                onClick={() => navigate("/notas/1")}
               >
                 Publicar Notas
               </button>
               <button
                 className="w-full text-left px-4 py-2 hover:bg-gray-100"
-                onClick={() => navigate("/Seccion")}
+                onClick={() => navigate("/secciones")}
               >
                 Secciones
               </button>
@@ -126,7 +123,7 @@ export default function AdminDashboard() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
-        <div className="bg-linear-to-r from-blue-500 to-blue-600 text-white p-6 rounded-2xl shadow-lg flex items-center justify-between transform transition hover:scale-105">
+        <div className="bg-gradient-to-r from-blue-500 to-blue-600 text-white p-6 rounded-2xl shadow-lg flex items-center justify-between transform transition hover:scale-105">
           <div>
             <h3 className="text-lg font-semibold">Estudiantes</h3>
             <p className="text-3xl font-bold mt-1">45</p>
@@ -137,7 +134,7 @@ export default function AdminDashboard() {
           <Users className="w-12 h-12 opacity-80" />
         </div>
 
-        <div className="`bg-linear-to-r from-emerald-500 to-teal-600 text-white p-6 rounded-2xl shadow-lg flex items-center justify-between transform transition hover:scale-105">
+        <div className="bg-gradient-to-r from-emerald-500 to-teal-600 text-white p-6 rounded-2xl shadow-lg flex items-center justify-between transform transition hover:scale-105">
           <div>
             <h3 className="text-lg font-semibold">Secciones</h3>
             <p className="text-3xl font-bold mt-1">12</p>
@@ -219,16 +216,12 @@ export default function AdminDashboard() {
                   <td className="px-6 py-4 text-sm text-gray-700 max-w-xs truncate">
                     {student.curso}
                   </td>
+
+                  {/* ← AQUÍ SOLO QUEDA EL BOTÓN "+" ← */}
                   <td className="px-6 py-4">
-                    <div className="flex items-center gap-2">
-                      <button className="text-blue-600 hover:text-blue-800 transition">
-                        <User className="w-5 h-5" />
-                      </button>
-                      <button className="text-amber-600 hover:text-amber-800 transition">
-                        <Edit className="w-5 h-5" />
-                      </button>
-                      <button className="text-red-600 hover:text-red-800 transition">
-                        <Trash2 className="w-5 h-5" />
+                    <div className="flex items-center justify-center">
+                      <button className="w-10 h-10 flex items-center justify-center bg-blue-600 text-white rounded-full shadow hover:bg-blue-700 transition transform hover:scale-110">
+                        +
                       </button>
                     </div>
                   </td>
