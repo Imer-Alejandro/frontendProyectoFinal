@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 import {
   Search,
   User,
@@ -9,12 +9,12 @@ import {
   ChevronDown,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-
+import { AuthContext } from "../../context/AuthContext";
 export default function AdminDashboard() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filter, setFilter] = useState("todos");
   const [dropdownOpen, setDropdownOpen] = useState(false);
-
+  const { user } = useContext(AuthContext);
   const navigate = useNavigate();
 
   // Datos de ejemplo
@@ -60,7 +60,7 @@ export default function AdminDashboard() {
   });
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4 md:p-6 lg:p-8">
+    <div className="min-h-screen  bg-gray-50 p-4 md:p-6 lg:p-8">
       {/* Header */}
       <header className="mb-8 flex flex-col md:flex-row gap-4 items-center justify-between">
         {/* Dropdown de usuario */}
@@ -70,9 +70,11 @@ export default function AdminDashboard() {
             onClick={() => setDropdownOpen((prev) => !prev)}
           >
             <div className="w-8 h-8 bg-blue-900 text-white rounded-full flex items-center justify-center text-sm font-bold">
-              NU
+              {`${user?.nombre?.charAt(0) || ""}${
+                user?.apellido?.charAt(0) || ""
+              }`.toUpperCase()}
             </div>
-            <span className="font-medium text-gray-700">Nombre usuario</span>
+            <span className="font-medium text-gray-700">{user?.nombre}</span>
             <ChevronDown className="w-4 h-4 text-gray-500" />
           </button>
 
@@ -90,12 +92,7 @@ export default function AdminDashboard() {
               >
                 Publicar Notas
               </button>
-              <button
-                className="w-full text-left px-4 py-2 hover:bg-gray-100"
-                onClick={() => navigate("/secciones")}
-              >
-                Secciones
-              </button>
+
               <button
                 className="w-full text-left px-4 py-2 hover:bg-gray-100 text-red-600"
                 onClick={() => {
