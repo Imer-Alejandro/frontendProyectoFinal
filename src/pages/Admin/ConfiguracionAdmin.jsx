@@ -1,9 +1,19 @@
 import { useEffect, useState, useContext } from "react";
 import { AuthContext } from "../../context/AuthContext";
-import { Edit2, X, Save, UserCheck, BookOpen, Loader2 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import {
+  Edit2,
+  X,
+  Save,
+  UserCheck,
+  BookOpen,
+  Loader2,
+  ArrowLeft,
+} from "lucide-react";
 
 export default function GestionUsuarios() {
   const { user } = useContext(AuthContext);
+  const navigate = useNavigate();
 
   const [usuarios, setUsuarios] = useState([]);
   const [cursos, setCursos] = useState([]);
@@ -80,7 +90,7 @@ export default function GestionUsuarios() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex items-center justify-center">
+      <div className="min-h-screen bg-linear-to-r from-slate-50 to-blue-50 flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="w-12 h-12 text-blue-600 animate-spin mx-auto mb-4" />
           <p className="text-gray-600 font-medium">Cargando datos...</p>
@@ -90,17 +100,23 @@ export default function GestionUsuarios() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 p-6 md:p-8">
+    <div className="min-h-screen bg-linear-to-r from-slate-50 via-blue-50 to-indigo-100 p-6 md:p-8">
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
-
-        <div className="mb-10 flex">
+        {/* BOTÓN REGRESAR */}
+        <div className="mb-6">
           <button
             onClick={() => navigate(-1)}
-            className="absolute top-6 left-6 mb-3 text-indigo-950  hover:text-white font-semibold transition"
+            className="flex items-center gap-3 px-5 py-3 bg-white rounded-xl shadow-md hover:shadow-lg transition-all hover:-translate-y-0.5 group"
           >
-            ← Volver
+            <div className="p-2 bg-blue-100 rounded-lg group-hover:bg-blue-200 transition">
+              <ArrowLeft className="w-5 h-5 text-blue-700" />
+            </div>
+            <span className="font-semibold text-gray-800">Regresar</span>
           </button>
+        </div>
+
+        {/* HEADER */}
+        <div className="mb-10">
           <h1 className="text-4xl font-bold text-gray-800 flex items-center gap-3">
             <UserCheck className="w-10 h-10 text-blue-600" />
             Gestión de Usuarios
@@ -111,7 +127,7 @@ export default function GestionUsuarios() {
           </p>
         </div>
 
-        {/* Tabla de Usuarios */}
+        {/* TABLA DE USUARIOS */}
         <div className="bg-white/80 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/50 overflow-hidden mb-12">
           <div className="p-8 border-b border-gray-200/60">
             <h2 className="text-2xl font-bold text-gray-800">
@@ -122,7 +138,7 @@ export default function GestionUsuarios() {
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white">
+                <tr className="bg-linear-to-r from-blue-600 to-indigo-700 text-white">
                   <th className="px-8 py-5 text-left font-semibold">ID</th>
                   <th className="px-8 py-5 text-left font-semibold">
                     Nombre Completo
@@ -140,7 +156,7 @@ export default function GestionUsuarios() {
                 {usuarios.map((u) => (
                   <tr
                     key={u.usuario_id}
-                    className="hover:bg-blue-50/60 transition-all duration-200 group"
+                    className="hover:bg-blue-50/60 transition-all duration-200"
                   >
                     <td className="px-8 py-6 font-mono text-blue-700 font-bold">
                       #{u.usuario_id}
@@ -151,7 +167,7 @@ export default function GestionUsuarios() {
                     <td className="px-8 py-6 text-gray-700">{u.email}</td>
                     <td className="px-8 py-6">
                       <span
-                        className={`inline-flex items-center px-4 py-2 rounded-full text-xs font-bold shadow-sm
+                        className={`inline-flex items-center px-4 py-2 rounded-full text-xs font-bold
                         ${
                           u.rol === "ADMIN"
                             ? "bg-purple-100 text-purple-800"
@@ -164,8 +180,7 @@ export default function GestionUsuarios() {
                           u.rol === "ESTUDIANTE"
                             ? "bg-emerald-100 text-emerald-800"
                             : ""
-                        }
-                      `}
+                        }`}
                       >
                         {u.rol}
                       </span>
@@ -173,7 +188,7 @@ export default function GestionUsuarios() {
                     <td className="px-8 py-6 text-center">
                       <button
                         onClick={() => openModal(u)}
-                        className="inline-flex items-center gap-2 px-5 py-3 bg-gradient-to-r from-blue-600 to-indigo-700 text-white font-medium rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300"
+                        className="inline-flex items-center gap-2 px-5 py-3 bg-linear-to-r from-blue-600 to-indigo-700 text-white font-medium rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all"
                       >
                         <Edit2 className="w-4 h-4" />
                         Editar
@@ -186,7 +201,7 @@ export default function GestionUsuarios() {
           </div>
         </div>
 
-        {/* Cursos */}
+        {/* CURSOS */}
         <div className="mb-6">
           <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-3 mb-6">
             <BookOpen className="w-8 h-8 text-emerald-600" />
@@ -198,13 +213,11 @@ export default function GestionUsuarios() {
           {cursos.map((c) => (
             <div
               key={c.curso_id}
-              className="group bg-white/90 backdrop-blur-xl rounded-2xl shadow-lg border border-gray-100 overflow-hidden hover:shadow-2xl hover:-translate-y-2 transition-all duration-300"
+              className="bg-white/90 rounded-2xl shadow-lg border hover:shadow-2xl transition"
             >
-              <div className="h-2 bg-gradient-to-r from-emerald-500 to-teal-600"></div>
+              <div className="h-2 bg-linear-to-r from-emerald-500 to-teal-600"></div>
               <div className="p-6">
-                <h3 className="font-bold text-xl text-gray-800 group-hover:text-emerald-700 transition">
-                  {c.nombre}
-                </h3>
+                <h3 className="font-bold text-xl text-gray-800">{c.nombre}</h3>
                 <p className="text-sm text-gray-600 mt-2 font-mono">
                   Código:{" "}
                   <span className="text-emerald-700 font-bold">{c.codigo}</span>
@@ -214,85 +227,59 @@ export default function GestionUsuarios() {
           ))}
         </div>
 
-        {/* MODAL CORREGIDO - LOS BOTONES AHORA SE VEN PERFECTAMENTE */}
+        {/* MODAL */}
         {modalOpen && (
-          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg max-h-screen overflow-y-auto">
-              {" "}
-              {/* ← Aquí estaba el problema */}
-              {/* Header del modal */}
-              <div className="bg-gradient-to-r from-blue-600 to-indigo-700 p-6 text-white sticky top-0">
+          <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-y-auto">
+              <div className="bg-linear-to-r from-blue-600 to-indigo-700 p-6 text-white">
                 <div className="flex items-center justify-between">
                   <h3 className="text-2xl font-bold flex items-center gap-3">
                     <Edit2 className="w-7 h-7" />
                     Editar Usuario
                   </h3>
-                  <button
-                    onClick={closeModal}
-                    className="p-2 hover:bg-white/20 rounded-xl transition"
-                  >
+                  <button onClick={closeModal}>
                     <X className="w-6 h-6" />
                   </button>
                 </div>
               </div>
-              {/* Formulario */}
+
               <div className="p-8 space-y-5">
                 {["nombre", "apellido", "email", "telefono"].map((field) => (
-                  <div key={field}>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2 capitalize">
-                      {field === "email"
-                        ? "Correo"
-                        : field === "telefono"
-                        ? "Teléfono"
-                        : field}
-                    </label>
-                    <input
-                      type={
-                        field === "email"
-                          ? "email"
-                          : field === "telefono"
-                          ? "tel"
-                          : "text"
-                      }
-                      name={field}
-                      value={editForm[field] || ""}
-                      onChange={handleEditChange}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-                      placeholder={`Ingrese ${field}`}
-                    />
-                  </div>
+                  <input
+                    key={field}
+                    name={field}
+                    value={editForm[field] || ""}
+                    onChange={handleEditChange}
+                    className="w-full px-4 py-3 border rounded-xl"
+                    placeholder={field}
+                  />
                 ))}
 
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Rol
-                  </label>
-                  <select
-                    name="rol"
-                    value={editForm.rol || ""}
-                    onChange={handleEditChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition font-medium"
-                  >
-                    <option value="ADMIN">ADMINISTRADOR</option>
-                    <option value="DOCENTE">DOCENTE</option>
-                    <option value="ESTUDIANTE">ESTUDIANTE</option>
-                  </select>
-                </div>
+                <select
+                  name="rol"
+                  value={editForm.rol || ""}
+                  onChange={handleEditChange}
+                  className="w-full px-4 py-3 border rounded-xl"
+                >
+                  <option value="ADMIN">ADMIN</option>
+                  <option value="DOCENTE">DOCENTE</option>
+                  <option value="ESTUDIANTE">ESTUDIANTE</option>
+                </select>
               </div>
-              {/* Botones siempre visibles */}
-              <div className="bg-gray-50 px-8 py-6 flex justify-end gap-4 border-t sticky bottom-0">
+
+              <div className="bg-gray-50 px-8 py-6 flex justify-end gap-4">
                 <button
                   onClick={closeModal}
-                  className="px-6 py-3 bg-gray-300 text-gray-700 font-semibold rounded-xl hover:bg-gray-400 transition"
+                  className="px-6 py-3 bg-gray-300 rounded-xl"
                 >
                   Cancelar
                 </button>
                 <button
                   onClick={actualizarUsuario}
-                  className="px-8 py-3 bg-gradient-to-r from-blue-600 to-indigo-700 text-white font-bold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition flex items-center gap-2"
+                  className="px-8 py-3 bg-blue-600 text-white rounded-xl"
                 >
-                  <Save className="w-5 h-5" />
-                  Guardar Cambios
+                  <Save className="w-5 h-5 inline mr-2" />
+                  Guardar
                 </button>
               </div>
             </div>

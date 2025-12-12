@@ -50,7 +50,7 @@ export default function PerfilDocente() {
   const isActivo = docente.estado === "activo";
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-6 md:p-8">
+    <div className="min-h-screen bg-linear-to-r from-slate-50 to-slate-100 p-6 md:p-8">
       {/* Botón regresar */}
       <div className="fixed top-6 left-6 z-50">
         <button
@@ -65,7 +65,7 @@ export default function PerfilDocente() {
       <div className="max-w-5xl mx-auto">
         {/* Header */}
         <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
-          <div className="bg-gradient-to-r from-blue-600 to-indigo-700 h-36" />
+          <div className="bg-linear-to-r from-blue-600 to-indigo-700 h-36" />
 
           <div className="relative px-8 pb-8">
             <div className="flex flex-col md:flex-row items-center md:items-end -mt-20 gap-6">

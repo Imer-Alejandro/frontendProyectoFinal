@@ -117,11 +117,6 @@ export default function Student() {
       <div className="flex-1 overflow-y-auto">
         <header className="sticky top-0 z-40 bg-white shadow-md p-5">
           <div className="flex items-center justify-between">
-            <input
-              type="text"
-              placeholder="Buscar..."
-              className="w-96 px-4 py-2.5 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-700"
-            />
             <div className="flex items-center space-x-3">
               <div className="bg-teal-500 text-white w-10 h-10 flex items-center justify-center rounded-full font-bold text-sm">
                 {`${user?.nombre?.charAt(0) || ""}${

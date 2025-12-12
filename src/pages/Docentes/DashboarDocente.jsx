@@ -123,7 +123,7 @@ export default function AdminDashboard() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
-        <div className="bg-gradient-to-r from-blue-500 to-blue-600 text-white p-6 rounded-2xl shadow-lg flex items-center justify-between transform transition hover:scale-105">
+        <div className="bg-linear-to-r from-blue-500 to-blue-600 text-white p-6 rounded-2xl shadow-lg flex items-center justify-between transform transition hover:scale-105">
           <div>
             <h3 className="text-lg font-semibold">Estudiantes</h3>
             <p className="text-3xl font-bold mt-1">45</p>
@@ -134,7 +134,7 @@ export default function AdminDashboard() {
           <Users className="w-12 h-12 opacity-80" />
         </div>
 
-        <div className="bg-gradient-to-r from-emerald-500 to-teal-600 text-white p-6 rounded-2xl shadow-lg flex items-center justify-between transform transition hover:scale-105">
+        <div className="bg-linear-to-r from-emerald-500 to-teal-600 text-white p-6 rounded-2xl shadow-lg flex items-center justify-between transform transition hover:scale-105">
           <div>
             <h3 className="text-lg font-semibold">Secciones</h3>
             <p className="text-3xl font-bold mt-1">12</p>

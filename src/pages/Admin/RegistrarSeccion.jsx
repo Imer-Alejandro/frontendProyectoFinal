@@ -6,14 +6,19 @@ const API = "https://servidor-proyecto-final-itla.vercel.app/api";
 export default function RegistrarSeccion() {
   const navigate = useNavigate();
 
+  // Estado del formulario
+  const [form, setForm] = useState({
+    curso_id: "",
+    docente_id: "",
+    capacidad_maxima: "",
+  });
+
   const [cursos, setCursos] = useState([]);
   const [docentes, setDocentes] = useState([]);
-  const [cursoId, setCursoId] = useState("");
-  const [docenteId, setDocenteId] = useState("");
-  const [capacidad, setCapacidad] = useState("");
-  const [loading, setLoading] = useState(true);
-  const [enviando, setEnviando] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
+  // Cargar cursos y docentes
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -21,126 +26,144 @@ export default function RegistrarSeccion() {
         const dataCursos = await resCursos.json();
         setCursos(dataCursos);
 
-        const resUsers = await fetch(`${API}/usuarios`);
-        const dataUsers = await resUsers.json();
+        const resUsuarios = await fetch(`${API}/usuarios`);
+        const dataUsuarios = await resUsuarios.json();
+
         setDocentes(
-          dataUsers.filter((u) => u.rol?.toUpperCase() === "DOCENTE")
+          dataUsuarios.filter((u) => u.rol?.toUpperCase() === "DOCENTE")
         );
-      } catch (error) {
-        alert("Error cargando información");
+      } catch {
+        setError("Error cargando cursos o docentes");
       }
-      setLoading(false);
     };
+
     fetchData();
   }, []);
 
-  const registrarSeccion = async () => {
-    if (!cursoId || !docenteId || !capacidad) {
-      alert("Debe completar todos los campos");
-      return;
-    }
-    console.log("📌 Usuarios cargados:", cursoId);
-    console.log("👨‍🏫 Docentes filtrados:", docenteId);
+  // Manejo de inputs
+  const handleChange = (e) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
 
-    setEnviando(true);
+  // Enviar formulario
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError("");
 
     try {
-      const resp = await fetch(`${API}/secciones`, {
+      const res = await fetch(`${API}/secciones`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          curso_id: Number(cursoId),
-          docente_id: Number(docenteId),
-          capacidad_maxima: Number(capacidad),
+          curso_id: Number(form.curso_id),
+          docente_id: Number(form.docente_id),
+          capacidad_maxima: Number(form.capacidad_maxima),
           estado: "abierta",
         }),
       });
 
-      const result = await resp.json();
-      if (!resp.ok) {
-        alert(result.error || "Error registrando sección");
-      } else {
-        alert("Sección registrada correctamente");
-        navigate(-1);
-      }
+      const data = await res.json();
+
+      if (!res.ok) throw new Error(data.error || "Error al registrar sección");
+
+      alert("Sección registrada correctamente");
+      navigate(-1);
     } catch (err) {
-      alert("Fallo al conectar con el servidor");
+      setError(err.message);
+    } finally {
+      setLoading(false);
     }
-
-    setEnviando(false);
   };
-
-  if (loading)
-    return <p className="text-center mt-10 text-white">Cargando...</p>;
 
   return (
     <div className="min-h-screen flex">
-      {/* Panel izquierdo - Formulario */}
-      <div className="w-full lg:w-1/2 bg-blue-700 flex flex-col justify-center items-center p-8 lg:p-16">
-        <h1 className="text-white text-3xl font-semibold mb-14">
-          Registrar Sección
-        </h1>
+      {/* Botón Volver */}
 
-        <select
-          name="curso"
-          className="w-full p-3 rounded mb-4 text-black"
-          value={cursoId}
-          onChange={(e) => setCursoId(e.target.value)}
-        >
-          <option value="">Seleccione un curso</option>
-          {cursos.map((c) => (
-            <option key={c.curso_id} value={c.curso_id}>
-              {c.nombre}
-            </option>
-          ))}
-        </select>
-
-        <select
-          name="docente"
-          className="w-full p-3 rounded mb-4 text-black"
-          value={docenteId}
-          onChange={(e) => setDocenteId(e.target.value)}
-        >
-          <option value="">Seleccione un docente</option>
-          {docentes.map((d) => (
-            <option key={d.usuario_id} value={d.usuario_id}>
-              {d.nombre} {d.apellido}
-            </option>
-          ))}
-        </select>
-
-        <input
-          name="capacidad"
-          type="number"
-          className="w-full p-3 rounded mb-6 text-black"
-          placeholder="Capacidad máxima"
-          value={capacidad}
-          onChange={(e) => setCapacidad(e.target.value)}
-          min="1"
-        />
-
+      {/* Lado Izquierdo */}
+      <div className="w-full lg:w-1/2 bg-blue-700 flex flex-col justify-center items-center p-8 lg:p-16 relative">
         <button
-          disabled={enviando || !cursoId || !docenteId || !capacidad}
-          onClick={registrarSeccion}
-          className={`${
-            enviando || !cursoId || !docenteId || !capacidad
-              ? "bg-gray-300 cursor-not-allowed"
-              : "bg-white hover:bg-gray-200"
-          } text-blue-700 font-semibold px-8 py-3 rounded transition w-full`}
+          onClick={() => navigate(-1)}
+          className="absolute top-6 left-6 text-blue-200 hover:text-white transition text-sm font-medium"
         >
-          {enviando ? "Guardando..." : "Registrar"}
+          ← Volver
         </button>
+        <div className="w-full max-w-md">
+          {/* Título */}
+          <div className="text-center mb-8">
+            <h1 className="text-3xl font-bold text-white">ERP Académico</h1>
+            <p className="text-blue-200 text-sm">Registro de Sección</p>
+          </div>
+
+          {/* Error */}
+          {error && (
+            <p className="bg-red-500 text-white px-4 py-2 rounded mb-3 text-center">
+              {error}
+            </p>
+          )}
+
+          {/* Formulario */}
+          <form className="space-y-4" onSubmit={handleSubmit}>
+            <select
+              name="curso_id"
+              value={form.curso_id}
+              onChange={handleChange}
+              required
+              className="w-full px-4 py-3 bg-blue-600 text-white border border-blue-500 rounded-md focus:ring-2 focus:ring-white"
+            >
+              <option value="">Seleccione un curso</option>
+              {cursos.map((c) => (
+                <option key={c.curso_id} value={c.curso_id}>
+                  {c.nombre}
+                </option>
+              ))}
+            </select>
+
+            <select
+              name="docente_id"
+              value={form.docente_id}
+              onChange={handleChange}
+              required
+              className="w-full px-4 py-3 bg-blue-600 text-white border border-blue-500 rounded-md focus:ring-2 focus:ring-white"
+            >
+              <option value="">Seleccione un docente</option>
+              {docentes.map((d) => (
+                <option key={d.usuario_id} value={d.usuario_id}>
+                  {d.nombre} {d.apellido}
+                </option>
+              ))}
+            </select>
+
+            <input
+              type="number"
+              name="capacidad_maxima"
+              placeholder="Capacidad máxima"
+              value={form.capacidad_maxima}
+              onChange={handleChange}
+              min="1"
+              required
+              className="w-full px-4 py-3 bg-blue-600 text-white placeholder-blue-300 border border-blue-500 rounded-md focus:ring-2 focus:ring-white"
+            />
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full py-3 bg-blue-800 hover:bg-blue-900 text-white font-semibold rounded-md transition duration-200"
+            >
+              {loading ? "Registrando..." : "Registrar sección"}
+            </button>
+          </form>
+        </div>
       </div>
 
-      {/* Panel derecho con imagen */}
-      <div className="hidden lg:flex lg:w-1/2 w-full bg-white items-center justify-center">
-        <img
-          src="https://afsformacion.com/wp-content/uploads/2023/01/cursos-online-consejos.jpg"
-          className="w-[80%]"
-          alt="side-img"
-        />
+      {/* Lado derecho (MISMA IMAGEN) */}
+      <div
+        className="hidden lg:block w-1/2 bg-cover bg-center"
+        style={{
+          backgroundImage: `url('https://images.unsplash.com/photo-1553877522-43269d4ea984?auto=format&fit=crop&w=1740&q=80')`,
+        }}
+      >
+        <div className="h-full bg-linear-to-t from-blue-900 via-transparent to-transparent opacity-60"></div>
       </div>
     </div>
   );
