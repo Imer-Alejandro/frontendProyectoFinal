@@ -13,7 +13,7 @@ export default function Login() {
   const navigate = useNavigate();
   // Estados del modal y registro
   const [showRegister, setShowRegister] = useState(false);
-
+  const { user } = useContext(AuthContext);
   const handleLogin = async (e) => {
     e.preventDefault();
     setIsLoading(true);
@@ -49,8 +49,9 @@ export default function Login() {
 
       // Redirección por rol
       if (userData.rol === "ADMIN") navigate("/admin");
-      else if (userData.rol === "DOCENTE") navigate("/DashboardDocente");
-      else if (userData.rol === "ESTUDIANTE") navigate("/estudiante");
+      else if (userData.rol === "DOCENTE")
+        navigate(`/docente/${user.usuario_id}`);
+      else if (userData.rol === "ESTUDIANTE") navigate(`/estudiante`);
       else alert("Rol desconocido en el sistema.");
     } catch (error) {
       console.error("❌ Error en login:", error);
