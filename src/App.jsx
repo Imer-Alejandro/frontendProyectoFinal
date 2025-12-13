@@ -71,7 +71,7 @@ function App() {
 
             <Route path="/PerfilDocente/:id" element={<PerfilDocente />} />
             <Route path="/docente/:id" element={<Docente />} />
-            <Route path="/notas/:id" element={<Notas />} />
+            <Route path="/notas" element={<Notas />} />
 
             {/* 🚫 RUTA POR DEFECTO */}
             <Route path="*" element={<Navigate to="/" replace />} />

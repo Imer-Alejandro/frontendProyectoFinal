@@ -237,7 +237,7 @@ export default function AdminDashboard() {
                   </td>
                   <td className="px-6 py-4">
                     <button
-                      onClick={() => navigate(`/notas/${s.seccion_id}`)}
+                      onClick={() => navigate(`/notas`)}
                       className="w-10 h-10 bg-blue-600 text-white rounded-full hover:bg-blue-700"
                     >
                       +

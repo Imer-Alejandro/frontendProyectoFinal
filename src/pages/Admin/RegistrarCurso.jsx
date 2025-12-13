@@ -142,7 +142,7 @@ export default function RegistrarCurso() {
               required
               className="w-full px-4 py-3 bg-blue-600 text-white placeholder-blue-300 border border-blue-500 rounded-md focus:outline-none focus:ring-2 focus:ring-white"
             />
-
+            <span className="text-amber-50">Fecha de inicio</span>
             <input
               name="fecha_inicio"
               type="date"
@@ -152,6 +152,7 @@ export default function RegistrarCurso() {
               className="w-full px-4 py-3 bg-blue-600 text-white border border-blue-500 rounded-md focus:outline-none focus:ring-2 focus:ring-white"
             />
 
+            <span className="text-amber-50">Fecha de termino</span>
             <input
               name="fecha_fin"
               type="date"
@@ -162,6 +163,7 @@ export default function RegistrarCurso() {
             />
 
             {/* Campo extra: fecha límite de inscripción */}
+            <span className="text-amber-50">Fecha limite inscripcion</span>
             <input
               name="fecha_limite_inscripcion"
               type="date"

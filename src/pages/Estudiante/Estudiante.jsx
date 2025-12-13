@@ -4,40 +4,60 @@ import { AuthContext } from "../../context/AuthContext";
 
 export default function Estudiante() {
   const navigate = useNavigate();
-  const [dropdownOpen, setDropdownOpen] = useState(false);
   const { user } = useContext(AuthContext);
 
-  const [cursoActual, setCursoActual] = useState(null);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [inscripciones, setInscripciones] = useState([]);
   const [recomendados, setRecomendados] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!user?.usuario_id) return;
+
     const fetchData = async () => {
       try {
-        // 📌 Si el estudiante está inscrito en un curso cargar info
-        if (user?.curso_actual_id) {
-          const res = await fetch(
-            `https://servidor-proyecto-final-itla.vercel.app/api/cursos/${user.curso_actual_id}`
-          );
-          setCursoActual(await res.json());
-        }
+        const resIns = await fetch(
+          `https://servidor-proyecto-final-itla.vercel.app/api/inscripcion/estudiante/${user.usuario_id}`
+        );
+        const dataIns = await resIns.json();
+        setInscripciones(dataIns);
 
-        // ⭐ Cursos programados para recomendar
-        const res2 = await fetch(
+        const resCursos = await fetch(
           "https://servidor-proyecto-final-itla.vercel.app/api/cursos"
         );
-        const cursos = await res2.json();
-        setRecomendados(cursos.filter((c) => c.estado === "programado"));
-      } catch (err) {
-        console.error("❌ Error cargando datos dashboard", err);
+        const cursos = await resCursos.json();
+
+        const cursosInscritos = dataIns.map((i) => i.nombre_curso);
+
+        const recomendadosFiltrados = cursos
+          .filter(
+            (c) =>
+              c.estado === "programado" && !cursosInscritos.includes(c.nombre)
+          )
+          .slice(0, 3);
+
+        setRecomendados(recomendadosFiltrados);
+      } catch (error) {
+        console.error("Error dashboard estudiante", error);
+      } finally {
+        setLoading(false);
       }
     };
 
     fetchData();
   }, [user]);
 
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        Cargando información...
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
+      {/* HEADER */}
       <header className="bg-white shadow p-4 flex justify-between items-center">
         <button
           onClick={() => navigate("/cursosList")}
@@ -46,15 +66,13 @@ export default function Estudiante() {
           Ver cursos disponibles
         </button>
 
-        <div className="relative ">
+        <div className="relative">
           <button
             onClick={() => setDropdownOpen(!dropdownOpen)}
-            className="flex cursor-pointer items-center gap-2 px-4 py-2 w-[200px] bg-gray-200 rounded"
+            className="flex items-center gap-2 px-4 py-2 w-[220px] bg-gray-200 rounded"
           >
             <div className="bg-teal-500 text-white w-10 h-10 flex items-center justify-center rounded-full font-bold text-sm">
-              {`${user?.nombre?.charAt(0) || ""}${
-                user?.apellido?.charAt(0) || ""
-              }`.toUpperCase()}
+              {`${user?.nombre?.charAt(0)}${user?.apellido?.charAt(0)}`}
             </div>
             {user?.nombre} {user?.apellido}
           </button>
@@ -75,7 +93,7 @@ export default function Estudiante() {
               </button>
               <button
                 onClick={() => {
-                  localStorage.removeItem("role");
+                  localStorage.clear();
                   navigate("/");
                 }}
                 className="px-4 py-2 block hover:bg-gray-100 w-full text-left text-red-600"
@@ -87,80 +105,82 @@ export default function Estudiante() {
         </div>
       </header>
 
-      <main className="max-w-6xl mx-auto p-6 space-y-10">
-        {/* Curso actual */}
-        <section className="bg-white p-6 rounded shadow">
-          <h2 className="text-xl font-bold mb-4">📘 Tu curso actual</h2>
+      <main className="max-w-6xl mx-auto p-6 space-y-12">
+        {/* 📘 CURSOS EN CURSO – SLIDER */}
+        <section>
+          <h2 className="text-xl font-bold mb-4">📘 Cursos en curso</h2>
 
-          {!cursoActual ? (
+          {inscripciones.length === 0 ? (
             <p className="text-gray-500 text-sm">
-              No estás inscrito en ningún curso actualmente.
+              Aún no estás inscrito en ningún curso.
             </p>
           ) : (
-            <div>
-              <h3 className="font-semibold text-lg">{cursoActual.nombre}</h3>
-              <p className="text-gray-600 mt-1 text-sm">
-                {cursoActual.descripcion}
-              </p>
+            <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-blue-500">
+              {inscripciones.map((i) => (
+                <div
+                  key={i.inscripcion_id}
+                  className="min-w-[280px] bg-white rounded-xl shadow-md p-5 border hover:shadow-lg transition"
+                >
+                  <h3 className="font-semibold text-lg text-gray-800">
+                    {i.nombre_curso}
+                  </h3>
 
-              <div className="mt-3 text-sm">
-                <p>
-                  <strong>Inicio:</strong>{" "}
-                  {new Date(cursoActual.fecha_inicio).toLocaleDateString()}
-                </p>
-                <p>
-                  <strong>Fin:</strong>{" "}
-                  {new Date(cursoActual.fecha_fin).toLocaleDateString()}
-                </p>
-              </div>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Inscrito el{" "}
+                    <strong>
+                      {new Date(i.fecha_inscripcion).toLocaleDateString()}
+                    </strong>
+                  </p>
+
+                  <p className="text-sm text-gray-600 mt-2">
+                    Sección:{" "}
+                    <span className="font-medium capitalize">
+                      {i.estado_seccion}
+                    </span>
+                  </p>
+
+                  {/* PROGRESO */}
+                  <div className="mt-4">
+                    <p className="text-sm font-medium mb-1">
+                      Progreso: {i.nota_final}%
+                    </p>
+
+                    <div className="w-full bg-gray-200 h-3 rounded-full overflow-hidden">
+                      <div
+                        className="h-3 bg-linear-to-r from-blue-500 to-blue-700 rounded-full transition-all"
+                        style={{ width: `${i.nota_final}%` }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </section>
 
-        {/* Recordatorios */}
-        {cursoActual && (
-          <section className="bg-blue-700 text-white p-6 rounded shadow">
-            <h2 className="text-xl font-bold mb-2">🔔 Recordatorios</h2>
-            <p className="text-sm">
-              Límite de inscripción:{" "}
-              <strong>
-                {new Date(
-                  cursoActual.fecha_limite_inscripcion
-                ).toLocaleDateString()}
-              </strong>
-            </p>
-            <p className="text-sm mt-1">
-              Asegúrate de completar tu curso antes del{" "}
-              <strong>
-                {new Date(cursoActual.fecha_fin).toLocaleDateString()}
-              </strong>
-            </p>
-          </section>
-        )}
-
-        {/* Cursos recomendados */}
+        {/* ⭐ CURSOS RECOMENDADOS */}
         <section>
-          <h2 className="text-xl font-bold mb-4">
-            ⭐ Cursos recomendados para ti
-          </h2>
+          <h2 className="text-xl font-bold mb-4">⭐ Cursos recomendados</h2>
 
           {recomendados.length === 0 ? (
             <p className="text-gray-500 text-sm">
-              No hay cursos disponibles ahora.
+              No hay cursos recomendados por ahora.
             </p>
           ) : (
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {recomendados.map((curso) => (
                 <div
                   key={curso.curso_id}
-                  className="bg-white p-4 rounded shadow hover:shadow-lg transition cursor-pointer"
+                  className="bg-white p-5 rounded-xl shadow hover:shadow-lg transition cursor-pointer border"
                   onClick={() => navigate(`/DetalleCursos/${curso.curso_id}`)}
                 >
                   <h3 className="font-semibold text-lg">{curso.nombre}</h3>
+
                   <p className="text-xs text-gray-600 mt-1 line-clamp-3">
                     {curso.descripcion}
                   </p>
-                  <p className="text-blue-600 mt-2 font-bold text-sm">
+
+                  <p className="text-blue-600 mt-3 font-bold text-sm">
                     RD$ {parseFloat(curso.costo_total).toLocaleString()}
                   </p>
                 </div>

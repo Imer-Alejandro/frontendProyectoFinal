@@ -1,106 +1,249 @@
-import React, { useState } from "react";
-import { ArrowLeft, Search, X } from "lucide-react";
+import React, { useEffect, useState, useContext } from "react";
+import { ArrowLeft, Search, X, User } from "lucide-react";
+import { AuthContext } from "../../context/AuthContext";
 
 export default function GradePublish() {
+  const { user } = useContext(AuthContext);
+  const docenteId = user?.usuario_id;
+
+  const [secciones, setSecciones] = useState([]);
+  const [seccionSeleccionada, setSeccionSeleccionada] = useState("");
+  const [estudiantes, setEstudiantes] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedStudent, setSelectedStudent] = useState({
-    initials: "NU",
-    name: "Nombre del estudiante",
-  });
-  const [category, setCategory] = useState("Examenes");
+  const [selectedStudent, setSelectedStudent] = useState(null);
   const [grade, setGrade] = useState("");
+  const [loading, setLoading] = useState(true);
 
-  const categories = ["Examenes", "Practica", "Foros", "Investigacion"];
+  /* =========================
+     CARGAR SECCIONES DOCENTE
+  ========================== */
+  useEffect(() => {
+    if (!docenteId) return;
 
-  // Función para regresar
-  const handleRegresar = () => {
-    window.history.back();
+    const fetchSecciones = async () => {
+      try {
+        const res = await fetch(
+          "https://servidor-proyecto-final-itla.vercel.app/api/secciones"
+        );
+        const data = await res.json();
+
+        const propias = data.filter(
+          (s) => Number(s.docente_id) === Number(docenteId)
+        );
+
+        setSecciones(propias);
+      } catch (error) {
+        console.error("Error cargando secciones", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSecciones();
+  }, [docenteId]);
+
+  /* =========================
+     CARGAR ESTUDIANTES
+  ========================== */
+  const cargarEstudiantes = async (seccionId) => {
+    const seccion = secciones.find((s) => s.seccion_id === Number(seccionId));
+    if (!seccion) return;
+
+    try {
+      const res = await fetch(
+        `https://servidor-proyecto-final-itla.vercel.app/api/inscripcion/curso/${seccion.curso_id}`
+      );
+      const data = await res.json();
+
+      const filtrados = data.filter(
+        (e) => Number(e.seccion_id) === Number(seccionId)
+      );
+
+      setEstudiantes(filtrados);
+      setSelectedStudent(null);
+      setSearchTerm("");
+    } catch (error) {
+      console.error("Error cargando estudiantes", error);
+    }
   };
 
+  /* =========================
+     FILTRO BUSCADOR
+  ========================== */
+  const estudiantesFiltrados = estudiantes.filter((e) =>
+    `${e.nombre_estudiante} ${e.apellido_estudiante}`
+      .toLowerCase()
+      .includes(searchTerm.toLowerCase())
+  );
+
+  /* =========================
+     PUBLICAR NOTA (CORREGIDO)
+  ========================== */
+  const handlePublicar = async () => {
+    if (!selectedStudent) return alert("Selecciona un estudiante");
+
+    const notaActual = Number(selectedStudent.nota_final || 0);
+    const nuevaNota = Number(grade);
+
+    if (isNaN(nuevaNota) || nuevaNota <= 0) {
+      return alert("Ingresa una nota válida");
+    }
+
+    if (notaActual >= 100) {
+      return alert("Este estudiante ya tiene el 100%");
+    }
+
+    if (notaActual + nuevaNota > 100) {
+      return alert(`Solo puedes agregar ${100 - notaActual}%`);
+    }
+
+    const notaFinal = Number((notaActual + nuevaNota).toFixed(2));
+
+    try {
+      const res = await fetch(
+        `https://servidor-proyecto-final-itla.vercel.app/api/inscripcion/${selectedStudent.inscripcion_id}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            estado: selectedStudent.estado,
+            nota_final: notaFinal,
+          }),
+        }
+      );
+
+      if (!res.ok) {
+        throw new Error("Error al actualizar nota");
+      }
+
+      /* 🔥 ACTUALIZAR ESTADO LOCAL */
+      setEstudiantes((prev) =>
+        prev.map((e) =>
+          e.inscripcion_id === selectedStudent.inscripcion_id
+            ? { ...e, nota_final: notaFinal }
+            : e
+        )
+      );
+
+      alert("Nota publicada correctamente ✅");
+      setGrade("");
+      setSelectedStudent(null);
+    } catch (error) {
+      console.error(error);
+      alert("Error al publicar nota");
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        Cargando...
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-gray-50 p-4 md:p-6 lg:p-8">
-      {/* Back Button - FUNCIONAL */}
+    <div className="min-h-screen bg-gray-50 p-6">
+      {/* REGRESAR */}
       <button
-        onClick={handleRegresar}
-        className="flex items-center gap-2 text-gray-700 hover:text-blue-900 mb-6 transition-colors font-medium"
+        onClick={() => window.history.back()}
+        className="flex items-center gap-2 mb-6 text-gray-700 hover:text-blue-900"
       >
-        <ArrowLeft className="w-5 h-5" />
-        <span>regresar</span>
+        <ArrowLeft /> regresar
       </button>
 
-      <div className="max-w-2xl mx-auto">
-        {/* Title */}
-        <h1 className="text-2xl font-bold text-center text-gray-900 mb-8">
+      <div className="max-w-2xl mx-auto bg-white p-6 rounded-xl shadow">
+        <h1 className="text-2xl font-bold text-center mb-4">
           Publicar Calificaciones
         </h1>
 
-        {/* Search Input */}
-        <div className="relative mb-6">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+        {/* DOCENTE */}
+        <div className="flex items-center gap-3 bg-blue-50 border border-blue-100 p-4 rounded-lg mb-6">
+          <div className="w-10 h-10 bg-blue-900 text-white flex items-center justify-center rounded-lg">
+            <User />
+          </div>
+          <div>
+            <p className="text-sm text-gray-600">Docente</p>
+            <p className="font-semibold text-gray-800">
+              {user?.nombre} {user?.apellido}
+            </p>
+          </div>
+        </div>
+
+        {/* SECCIONES */}
+        <select
+          value={seccionSeleccionada}
+          onChange={(e) => {
+            setSeccionSeleccionada(e.target.value);
+            cargarEstudiantes(e.target.value);
+          }}
+          className="w-full mb-4 px-4 py-3 border rounded-lg"
+        >
+          <option value="">Selecciona una sección</option>
+          {secciones.map((s) => (
+            <option key={s.seccion_id} value={s.seccion_id}>
+              {s.curso_nombre}
+            </option>
+          ))}
+        </select>
+
+        {/* BUSCADOR */}
+        <div className="relative mb-4">
+          <Search className="absolute left-3 top-3 text-gray-400" />
           <input
             type="text"
             placeholder="Buscar estudiante..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-3 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+            className="w-full pl-10 py-3 border rounded-lg"
           />
         </div>
 
-        {/* Selected Student Tag */}
-        {selectedStudent && (
-          <div className="flex items-center justify-between bg-gray-100 px-4 py-3 rounded-lg mb-6">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-blue-900 text-white rounded-lg flex items-center justify-center font-bold text-sm">
-                {selectedStudent.initials}
-              </div>
-              <span className="font-medium text-gray-700">
-                {selectedStudent.name}
-              </span>
-            </div>
-            <button
-              onClick={() => setSelectedStudent(null)}
-              className="text-red-500 hover:text-red-700 transition"
+        {/* LISTA */}
+        {!selectedStudent &&
+          estudiantesFiltrados.map((e) => (
+            <div
+              key={e.inscripcion_id}
+              onClick={() => setSelectedStudent(e)}
+              className="p-3 border rounded-lg mb-2 cursor-pointer hover:bg-gray-50"
             >
-              <X className="w-5 h-5" />
+              {e.nombre_estudiante} {e.apellido_estudiante}
+            </div>
+          ))}
+
+        {/* ESTUDIANTE */}
+        {selectedStudent && (
+          <div className="bg-gray-100 p-4 rounded-lg mb-4 flex justify-between">
+            <div>
+              <strong>
+                {selectedStudent.nombre_estudiante}{" "}
+                {selectedStudent.apellido_estudiante}
+              </strong>
+              <p className="text-sm text-gray-600">
+                Nota actual: {selectedStudent.nota_final || 0}% — Disponible:{" "}
+                {100 - Number(selectedStudent.nota_final || 0)}%
+              </p>
+            </div>
+            <button onClick={() => setSelectedStudent(null)}>
+              <X />
             </button>
           </div>
         )}
 
-        {/* Category Selector */}
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Categoría a evaluar
-          </label>
-          <select
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-            className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
-          >
-            {categories.map((cat) => (
-              <option key={cat} value={cat}>
-                {cat}
-              </option>
-            ))}
-          </select>
-        </div>
+        {/* NOTA */}
+        <input
+          type="number"
+          placeholder="Monto a agregar (%)"
+          value={grade}
+          onChange={(e) => setGrade(e.target.value)}
+          className="w-full mb-4 px-4 py-3 border rounded-lg text-center text-lg"
+        />
 
-        {/* Grade Input */}
-        <div className="mb-6">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Calificación final
-          </label>
-          <input
-            type="text"
-            value={grade}
-            onChange={(e) => setGrade(e.target.value)}
-            placeholder="0"
-            className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition text-center text-lg font-medium"
-          />
-        </div>
-
-        {/* Submit Button */}
-        <button className="w-full bg-gradient-to-r from-blue-900 to-blue-800 text-white py-3 rounded-lg font-medium hover:from-blue-800 hover:to-blue-700 transition shadow-md">
-          publicar notas
+        <button
+          onClick={handlePublicar}
+          className="w-full bg-blue-900 text-white py-3 rounded-lg hover:bg-blue-800 transition"
+        >
+          Publicar nota
         </button>
       </div>
     </div>

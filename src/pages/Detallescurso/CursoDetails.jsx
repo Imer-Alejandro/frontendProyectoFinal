@@ -6,11 +6,12 @@ export default function CursoDetails() {
   const { id } = useParams();
   const [curso, setCurso] = useState(null);
   const [maestros, setMaestros] = useState([]);
+  const [inscripciones, setInscripciones] = useState([]);
   const [cargando, setCargando] = useState(true);
 
   const { user } = useContext(AuthContext);
 
-  // ⭐ NUEVO: control modal y loading
+  // Modal y loading
   const [mostrarModal, setMostrarModal] = useState(false);
   const [enviando, setEnviando] = useState(false);
 
@@ -27,11 +28,14 @@ export default function CursoDetails() {
           "https://servidor-proyecto-final-itla.vercel.app/api/secciones"
         );
         const dataSec = await resSec.json();
-        const maestrosFiltrados = dataSec.filter(
-          (s) => Number(s.curso_id) === Number(id)
-        );
+        setMaestros(dataSec.filter((s) => Number(s.curso_id) === Number(id)));
 
-        setMaestros(maestrosFiltrados);
+        // 🔒 Inscripciones del estudiante (VALIDACIÓN)
+        const resIns = await fetch(
+          `https://servidor-proyecto-final-itla.vercel.app/api/inscripcion/estudiante/${user.usuario_id}`
+        );
+        const dataIns = await resIns.json();
+        setInscripciones(dataIns);
       } catch (error) {
         console.error("Error al cargar datos:", error);
       } finally {
@@ -40,10 +44,20 @@ export default function CursoDetails() {
     };
 
     fetchData();
-  }, [id]);
+  }, [id, user.usuario_id]);
 
-  // ⭐ FUNCIÓN NUEVA: API de inscripción
+  // ✅ VALIDACIÓN: ya inscrito en este curso
+  const yaInscritoEnCurso = inscripciones.some(
+    (i) => Number(i.curso_id) === Number(id)
+  );
+
+  // ✅ INSCRIPCIÓN
   const inscribirEstudiante = async (seccion_id) => {
+    if (yaInscritoEnCurso) {
+      alert("❌ Ya estás inscrito en este curso");
+      return;
+    }
+
     try {
       setEnviando(true);
       const res = await fetch(
@@ -141,7 +155,6 @@ export default function CursoDetails() {
 
         {/* Sidebar */}
         <aside className="flex-1 space-y-6">
-          {/* Card costo */}
           <div className="bg-[#24324a] text-white p-6 rounded-lg text-center shadow-md">
             <p className="text-lg">
               Costo:{" "}
@@ -152,18 +165,19 @@ export default function CursoDetails() {
               </span>
             </p>
 
-            {/* ⭐ MODIFICADO: abre modal */}
             <button
-              disabled={maestros.length === 0}
+              disabled={maestros.length === 0 || yaInscritoEnCurso}
               onClick={() => setMostrarModal(true)}
               className={`font-bold py-2 px-6 rounded-md mt-4 w-full transition
                 ${
-                  maestros.length === 0
+                  yaInscritoEnCurso || maestros.length === 0
                     ? "bg-gray-400 cursor-not-allowed"
                     : "bg-[#3b67d8] hover:bg-blue-700 text-white"
                 }`}
             >
-              {maestros.length === 0
+              {yaInscritoEnCurso
+                ? "Ya estás inscrito"
+                : maestros.length === 0
                 ? "Sin secciones disponibles"
                 : "Inscribirse"}
             </button>
@@ -175,34 +189,10 @@ export default function CursoDetails() {
                 : "No definido"}
             </p>
           </div>
-
-          {/* Maestros */}
-          <div className="bg-white p-6 rounded-lg shadow-sm">
-            <h3 className="text-lg font-semibold mb-4">Maestros</h3>
-            {maestros.length === 0 ? (
-              <p className="text-sm text-gray-500">
-                Sin secciones asignadas aún
-              </p>
-            ) : (
-              <ul className="space-y-3">
-                {maestros.map((m) => (
-                  <li key={m.seccion_id} className="flex items-center">
-                    <span className="bg-[#24324a] text-white font-bold text-sm px-3 py-1 rounded mr-3">
-                      {m.docente_nombre?.[0]}
-                      {m.docente_apellido?.[0]}
-                    </span>
-                    <span className="text-sm text-gray-700">
-                      {m.docente_nombre} {m.docente_apellido}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
         </aside>
       </main>
 
-      {/* ⭐ MODAL NUEVO */}
+      {/* MODAL */}
       {mostrarModal && (
         <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center">
           <div className="bg-white w-96 rounded-lg p-6 shadow-xl">
