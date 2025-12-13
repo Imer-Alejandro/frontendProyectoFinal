@@ -130,7 +130,7 @@ export default function AdminDashboard() {
             <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border z-50">
               <button
                 className="w-full px-4 py-2 text-left hover:bg-gray-100"
-                onClick={() => navigate("/PerfilDocente")}
+                onClick={() => navigate(`/PerfilDocente/${docenteId}`)}
               >
                 Perfil
               </button>

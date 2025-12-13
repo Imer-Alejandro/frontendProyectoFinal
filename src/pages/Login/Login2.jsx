@@ -139,8 +139,8 @@ export default function Login() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.5 }}
             >
-              <h1 className="text-4xl lg:text-5xl font-bold text-gray-800 bg-clip-text bg-linear-to-r from-violet-600 to-blue-600">
-                Bienvenido
+              <h1 className=" lg:text-3xl font-bold text-gray-800 bg-clip-text bg-linear-to-r from-violet-600 to-blue-600">
+                Bienvenido al ERP Udomi
               </h1>
               <p className="font-medium text-lg text-gray-500 mt-2">
                 Por favor, ingresa tus datos para continuar.
@@ -198,21 +198,7 @@ export default function Login() {
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.8 }}
                 className="flex justify-between items-center"
-              >
-                <label className="flex items-center gap-2 text-gray-700 font-medium cursor-pointer">
-                  <input
-                    type="checkbox"
-                    className="w-5 h-5 text-violet-600 rounded focus:ring-violet-500"
-                  />
-                  Recuérdame
-                </label>
-                <button
-                  type="button"
-                  className="font-medium text-base text-violet-600 hover:text-violet-700 transition"
-                >
-                  ¿Olvidaste tu contraseña?
-                </button>
-              </motion.div>
+              ></motion.div>
 
               {/* Botón */}
               <motion.div
@@ -244,17 +230,7 @@ export default function Login() {
               animate={{ opacity: 1 }}
               transition={{ delay: 1 }}
               className="mt-8 text-center"
-            >
-              <p className="font-medium text-base text-gray-600">
-                ¿No tienes una cuenta?{" "}
-                <button
-                  className="text-violet-600 font-bold hover:underline transition"
-                  onClick={() => setShowRegister(true)}
-                >
-                  Solicita una
-                </button>
-              </p>
-            </motion.div>
+            ></motion.div>
           </motion.div>
         </div>
       </motion.div>

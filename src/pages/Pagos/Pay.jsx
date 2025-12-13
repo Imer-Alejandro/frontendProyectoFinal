@@ -1,165 +1,276 @@
 /* eslint-disable jsx-a11y/anchor-is-valid */
-import React from "react";
+import React, { useEffect, useState, useContext } from "react";
+import { AuthContext } from "../../context/AuthContext";
 
 export default function Pago() {
+  const { user } = useContext(AuthContext);
+
+  const [inscripciones, setInscripciones] = useState([]);
+  const [cursos, setCursos] = useState([]);
+  const [pagos, setPagos] = useState([]);
+  const [cursoSeleccionado, setCursoSeleccionado] = useState(null);
+
+  // tarjeta (simulación)
+  const [tarjeta, setTarjeta] = useState({
+    numero: "",
+    nombre: "",
+    mes: "",
+    year: "",
+    cvv: "",
+  });
+
+  const [monto, setMonto] = useState("");
+  const [enviando, setEnviando] = useState(false);
+
+  /* =========================
+     CARGA INICIAL
+  ========================== */
+  useEffect(() => {
+    if (!user?.usuario_id) return;
+
+    const fetchData = async () => {
+      try {
+        // Inscripciones
+        const resIns = await fetch(
+          `https://servidor-proyecto-final-itla.vercel.app/api/inscripcion/estudiante/${user.usuario_id}`
+        );
+        const dataIns = await resIns.json();
+        setInscripciones(dataIns);
+        if (dataIns.length > 0) setCursoSeleccionado(dataIns[0]);
+
+        // Cursos
+        const resCursos = await fetch(
+          "https://servidor-proyecto-final-itla.vercel.app/api/cursos"
+        );
+        setCursos(await resCursos.json());
+
+        // Pagos
+        const resPagos = await fetch(
+          `https://servidor-proyecto-final-itla.vercel.app/api/pago/estudiante/${user.usuario_id}`
+        );
+        const dataPagos = await resPagos.json();
+        setPagos(dataPagos.data || []);
+      } catch (err) {
+        console.error("Error cargando datos", err);
+      }
+    };
+
+    fetchData();
+  }, [user]);
+
+  /* =========================
+     UTILIDAD
+  ========================== */
+  const getCostoCurso = (nombreCurso) => {
+    const curso = cursos.find((c) => c.nombre === nombreCurso);
+    return curso ? Number(curso.costo_total) : 0;
+  };
+
+  /* =========================
+     CÁLCULOS
+  ========================== */
+  const totalCursos = inscripciones.reduce(
+    (acc, i) => acc + getCostoCurso(i.nombre_curso),
+    0
+  );
+
+  const totalPagado = pagos.reduce((acc, p) => acc + Number(p.monto || 0), 0);
+
+  const deudaGeneral = Math.max(totalCursos - totalPagado, 0);
+
+  const descuento = tarjeta.numero ? deudaGeneral * 0.1 : 0;
+  const deudaFinal = deudaGeneral - descuento;
+
+  /* =========================
+     REGISTRAR PAGO
+  ========================== */
+  const handlePago = async (e) => {
+    e.preventDefault();
+
+    const montoNum = Number(monto);
+    if (isNaN(montoNum) || montoNum <= 0) return alert("Monto inválido");
+
+    if (montoNum > deudaFinal) return alert("El monto excede la deuda");
+
+    try {
+      setEnviando(true);
+
+      const res = await fetch(
+        "https://servidor-proyecto-final-itla.vercel.app/api/pago",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            inscripcion_id: cursoSeleccionado.inscripcion_id,
+            monto: montoNum,
+            metodo: "Tarjeta",
+            referencia: tarjeta.numero.slice(-4),
+            registrado_por: user.usuario_id,
+            estado: "Pendiente",
+          }),
+        }
+      );
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message);
+
+      setPagos((prev) => [data.data, ...prev]);
+      setMonto("");
+      alert("✅ Pago simulado correctamente");
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setEnviando(false);
+    }
+  };
+
+  if (inscripciones.length === 0) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        No tienes cursos inscritos
+      </div>
+    );
+  }
+
   return (
-    <div className="bg-gray-50 p-4 md:p-8 font-sans overflow-y-auto h-auto min-h-screen">
-      {/* Contenedor principal */}
+    <div className="bg-gray-50 p-4 md:p-8 min-h-screen">
       <div className="max-w-6xl mx-auto bg-white rounded-2xl shadow-lg">
-        {/* Header: Banner con botón "Regresar" */}
+        {/* HEADER */}
         <div className="relative rounded-t-2xl">
           <button
-            className="absolute top-4 left-4 z-10 bg-white/80 backdrop-blur-sm text-gray-700 px-4 py-2 rounded-lg shadow hover:bg-white transition flex items-center gap-2 text-sm font-medium"
             onClick={() => window.history.back()}
+            className="absolute top-4 left-4 bg-white/80 px-4 py-2 rounded-lg shadow text-sm"
           >
             ← Regresar
           </button>
-          <div className="h-32 bg-gradient-to-r from-blue-500 to-indigo-600"></div>
+          <div className="h-32 bg-linear-to-r from-blue-500 to-indigo-600"></div>
         </div>
 
-        {/* Contenido principal */}
         <div className="p-6 md:p-8 lg:flex lg:gap-8">
-          {/* === LADO IZQUIERDO: Perfil del estudiante === */}
+          {/* IZQUIERDA */}
           <div className="lg:w-1/2 space-y-6">
-            {/* Avatar + Nombre */}
-            <div className="flex items-center gap-4">
-              <div className="w-16 h-16 bg-indigo-600 text-white rounded-full flex items-center justify-center text-2xl font-bold shadow-md">
-                NU
-              </div>
-              <div>
-                <h2 className="text-2xl font-bold text-gray-800">
-                  Nombre del usuario completo con apellido
-                </h2>
-              </div>
-            </div>
+            <h2 className="text-2xl font-bold">
+              {user.nombre} {user.apellido}
+            </h2>
 
-            {/* Información del estudiante */}
-            <div className="space-y-3 text-gray-700">
-              <p>
-                <span className="font-semibold">Matrícula:</span> 2025B123255
-              </p>
-              <p>
-                <span className="font-semibold">Curso en curso:</span>{" "}
-                <a
-                  href="#"
-                  className="text-blue-600 hover:underline font-medium"
-                >
-                  Programación orientada a objetos
-                </a>
-              </p>
-              <p>
-                <span className="font-semibold">Costo total:</span>{" "}
-                <span className="text-blue-600 font-bold text-xl">$5,600</span>
-              </p>
-              <p>
-                <span className="font-semibold">Deuda pendiente:</span>{" "}
-                <span className="text-red-600 font-bold text-xl">$3,500</span>
-              </p>
-            </div>
-
-            {/* Historial de abonos */}
             <div>
-              <h4 className="text-lg font-bold text-gray-800 mb-3">
-                Historial de abonos
-              </h4>
-              <ul className="space-y-2">
-                <li className="bg-green-50 text-green-700 font-medium px-4 py-3 rounded-lg border border-green-200">
-                  $1,100 - 12/9/2025 4:45 pm
-                </li>
-                <li className="bg-green-50 text-green-700 font-medium px-4 py-3 rounded-lg border border-green-200">
-                  $1,000 - 10/9/2025 11:05 am
-                </li>
-              </ul>
+              <label className="font-semibold">Curso a pagar</label>
+              <select
+                className="w-full mt-1 px-4 py-2 border rounded"
+                value={cursoSeleccionado?.inscripcion_id}
+                onChange={(e) =>
+                  setCursoSeleccionado(
+                    inscripciones.find(
+                      (i) => i.inscripcion_id === Number(e.target.value)
+                    )
+                  )
+                }
+              >
+                {inscripciones.map((i) => (
+                  <option key={i.inscripcion_id} value={i.inscripcion_id}>
+                    {i.nombre_curso} — RD$
+                    {getCostoCurso(i.nombre_curso).toLocaleString()}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <p>
+              <strong>Deuda total:</strong>{" "}
+              <span className="text-red-600 font-bold">
+                RD$ {deudaFinal.toLocaleString()}
+              </span>
+            </p>
+
+            {descuento > 0 && (
+              <p className="text-green-600 font-medium">
+                🎉 Descuento aplicado: RD$ {descuento.toLocaleString()}
+              </p>
+            )}
+
+            {/* HISTORIAL */}
+            <div>
+              <h4 className="font-bold mb-2">Historial de pagos</h4>
+              {pagos.length === 0 ? (
+                <p className="text-sm text-gray-500">
+                  No hay pagos registrados
+                </p>
+              ) : (
+                <ul className="space-y-2">
+                  {pagos.map((p) => (
+                    <li
+                      key={p.pago_id}
+                      className="bg-green-50 px-4 py-2 rounded border"
+                    >
+                      RD$ {Number(p.monto).toLocaleString()} —{" "}
+                      {new Date(
+                        p.fecha_pago || p.created_at || Date.now()
+                      ).toLocaleString()}
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
           </div>
 
-          {/* Divisor vertical (solo en pantallas grandes) */}
-          <div className="hidden lg:block w-px bg-gray-300 mx-8"></div>
-
-          {/* === LADO DERECHO: Formulario de pago === */}
+          {/* DERECHA */}
           <div className="lg:w-1/2 mt-8 lg:mt-0">
-            <h3 className="text-2xl font-bold text-gray-800 mb-6">
-              Ingrese sus datos de pago
-            </h3>
+            <h3 className="text-2xl font-bold mb-6">Datos de la tarjeta</h3>
 
-            <form className="space-y-5 pb-10">
-              {/* Número de tarjeta */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Número de tarjeta
-                </label>
+            <form onSubmit={handlePago} className="space-y-4">
+              <input
+                placeholder="Número de tarjeta"
+                className="w-full px-4 py-3 bg-gray-100 border rounded"
+                onChange={(e) =>
+                  setTarjeta({ ...tarjeta, numero: e.target.value })
+                }
+              />
+
+              <input
+                placeholder="Nombre en la tarjeta"
+                className="w-full px-4 py-3 bg-gray-100 border rounded"
+                onChange={(e) =>
+                  setTarjeta({ ...tarjeta, nombre: e.target.value })
+                }
+              />
+
+              <div className="flex gap-2">
                 <input
-                  type="text"
-                  placeholder="1234 5678 9012 3456"
-                  className="w-full px-4 py-3 bg-gray-100 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition placeholder-gray-400"
+                  placeholder="MM"
+                  className="w-1/3 px-4 py-3 bg-gray-100 border rounded"
+                  onChange={(e) =>
+                    setTarjeta({ ...tarjeta, mes: e.target.value })
+                  }
+                />
+                <input
+                  placeholder="YY"
+                  className="w-1/3 px-4 py-3 bg-gray-100 border rounded"
+                  onChange={(e) =>
+                    setTarjeta({ ...tarjeta, year: e.target.value })
+                  }
+                />
+                <input
+                  placeholder="CVV"
+                  className="w-1/3 px-4 py-3 bg-gray-100 border rounded"
+                  onChange={(e) =>
+                    setTarjeta({ ...tarjeta, cvv: e.target.value })
+                  }
                 />
               </div>
 
-              {/* Fecha de vencimiento */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Fecha de vencimiento
-                </label>
-                <div className="flex gap-3 items-center">
-                  <input
-                    type="text"
-                    placeholder="MM"
-                    maxLength="2"
-                    className="w-20 px-4 py-3 bg-gray-100 border border-gray-300 rounded-lg text-center focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                  <span className="text-gray-500 text-lg">/</span>
-                  <input
-                    type="text"
-                    placeholder="YY"
-                    maxLength="2"
-                    className="w-20 px-4 py-3 bg-gray-100 border border-gray-300 rounded-lg text-center focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-              </div>
+              <input
+                type="number"
+                placeholder="Monto a abonar"
+                value={monto}
+                onChange={(e) => setMonto(e.target.value)}
+                className="w-full px-4 py-3 bg-gray-100 border rounded"
+              />
 
-              {/* Nombre en la tarjeta */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Nombre en la tarjeta
-                </label>
-                <input
-                  type="text"
-                  placeholder="Juan Pérez"
-                  className="w-full px-4 py-3 bg-gray-100 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-
-              {/* CVV */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Código de 3 números (CVV)
-                </label>
-                <input
-                  type="text"
-                  placeholder="123"
-                  maxLength="3"
-                  className="w-32 px-4 py-3 bg-gray-100 border border-gray-300 rounded-lg text-center focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-
-              {/* Monto */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Monto abonado
-                </label>
-                <input
-                  type="text"
-                  placeholder="$1,000"
-                  className="w-full px-4 py-3 bg-gray-100 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-
-              {/* Botón de pago */}
               <button
-                type="submit"
-                className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold text-lg py-4 rounded-lg transition-all duration-200 transform hover:scale-[1.02] shadow-lg"
+                disabled={enviando}
+                className="w-full bg-linear-to-r from-blue-600 to-indigo-600 text-white py-4 rounded-lg font-bold"
               >
-                Realizar abono
+                {enviando ? "Procesando..." : "Realizar abono"}
               </button>
             </form>
           </div>
